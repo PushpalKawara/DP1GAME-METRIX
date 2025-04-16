@@ -21,7 +21,7 @@ def main():
 
     st.subheader("📝 Editable Fields")
     version = st.text_input("Enter Version (e.g. v1.2.3)", value="v1.0.0")
-    selected_date = st.date_input("Date Selected", value=datetime.date.today())
+    date_selected = st.date_input("Date Selected", value=datetime.date.today())
     check_date = st.date_input("Check Date", value=datetime.date.today() + datetime.timedelta(days=1))
 
     if file1 and file2:
@@ -51,83 +51,98 @@ def main():
             df2.dropna(inplace=True)
             df2['EVENT_CLEAN'] = df2['EVENT_CLEAN'].astype(int)
             df2 = df2.sort_values('EVENT_CLEAN')
-            max_event_users = df2['USERS'].max()
-            df2['% of Users at Ad'] = round((df2['USERS'] / max_event_users) * 100, 2)
-            st.success("✅ Ad event data cleaned successfully!")
+            df2['% of Users at Ad'] = round((df2['USERS'] / max_users) * 100, 2)
+
+            df2['Diff of Ads'] = df2['EVENT_CLEAN'].diff().fillna(df2['EVENT_CLEAN']).astype(int)
+            df2['Multi'] = df2['Diff of Ads'] * df2['USERS']
+            avg_diff = df2['Diff of Ads'].mean()
+            df2['Diff of Users'] = df2['USERS'].diff().fillna(df2['USERS']).astype(int)
+            df2['Multi 2'] = avg_diff * df2['Diff of Users']
+            total_avg_ads = round((df2['Multi'].sum() + df2['Multi 2'].sum()) / max_users, 2)
+            st.success("✅ Ad data processed successfully!")
         else:
             st.error("❌ Required columns not found in file 2.")
             return
 
-        level1_users = int(df1[df1['LEVEL_CLEAN'] == 1]['USERS'].values[0]) if not df1[df1['LEVEL_CLEAN'] == 1].empty else 0
-        retention_20 = df1[df1['LEVEL_CLEAN'] == 20]['Retention %'].values[0] if not df1[df1['LEVEL_CLEAN'] == 20].empty else 0
-        retention_50 = df1[df1['LEVEL_CLEAN'] == 50]['Retention %'].values[0] if not df1[df1['LEVEL_CLEAN'] == 50].empty else 0
-        retention_75 = df1[df1['LEVEL_CLEAN'] == 75]['Retention %'].values[0] if not df1[df1['LEVEL_CLEAN'] == 75].empty else 0
-        retention_100 = df1[df1['LEVEL_CLEAN'] == 100]['Retention %'].values[0] if not df1[df1['LEVEL_CLEAN'] == 100].empty else 0
-        retention_150 = df1[df1['LEVEL_CLEAN'] == 150]['Retention %'].values[0] if not df1[df1['LEVEL_CLEAN'] == 150].empty else 0
-        retention_200 = df1[df1['LEVEL_CLEAN'] == 200]['Retention %'].values[0] if not df1[df1['LEVEL_CLEAN'] == 200].empty else 0
+        st.subheader("📈 Retention Chart (Levels 1–100)")
+        fig, ax = plt.subplots(figsize=(10, 5))
+        df1_100 = df1[df1['LEVEL_CLEAN'] <= 100]
+        ax.plot(df1_100['LEVEL_CLEAN'], df1_100['Retention %'], linestyle='-', color='blue')
+        ax.set_xlim(1, 100)
+        ax.set_ylim(0, 100)
+        ax.set_yticks(np.arange(0, 101, 5))
+        ax.set_xticks(np.arange(1, 101, 5))
+        ax.set_xlabel("Level")
+        ax.set_ylabel("% Retention")
+        ax.set_title(f"➤ Retention Chart (Levels 1–100) | Version: {version}")
+        ax.grid(True, which='both', linestyle='--', linewidth=0.5)
+        st.pyplot(fig)
 
-        day1_ret = round(np.random.uniform(30, 60), 2)
-        day3_ret = round(np.random.uniform(10, 40), 2)
-        session_len = round(np.random.uniform(120, 400), 2)
-        playtime_len = round(np.random.uniform(300, 1000), 2)
-
-        ad_10 = df2[df2['EVENT_CLEAN'] == 10]['% of Users at Ad'].values[0] if not df2[df2['EVENT_CLEAN'] == 10].empty else 0
-        ad_20 = df2[df2['EVENT_CLEAN'] == 20]['% of Users at Ad'].values[0] if not df2[df2['EVENT_CLEAN'] == 20].empty else 0
-        ad_40 = df2[df2['EVENT_CLEAN'] == 40]['% of Users at Ad'].values[0] if not df2[df2['EVENT_CLEAN'] == 40].empty else 0
-        ad_70 = df2[df2['EVENT_CLEAN'] == 70]['% of Users at Ad'].values[0] if not df2[df2['EVENT_CLEAN'] == 70].empty else 0
-        ad_100 = df2[df2['EVENT_CLEAN'] == 100]['% of Users at Ad'].values[0] if not df2[df2['EVENT_CLEAN'] == 100].empty else 0
-
-        avg_ads_user = round(np.random.uniform(5, 15), 2)
-
+        st.subheader("📋 Final Summary Table")
         summary_data = {
             "Metric": [
                 "Version", "Date Selected", "CHECK DATE", "LEVEL 1 users",
-                "Total Level Retention(20)", "Total Level Retention(50)", "Total Level Retention(75)",
-                "Total Level Retention(100)", "Total Level Retention(150)", "Total Level Retention(200)",
-                "Day 1 Retention", "Day 3 Retention",
-                "Session Length", "Playtime length",
-                "% of Users at Ad 10", "% of Users at Ad 20", "% of Users at Ad 40", "% of Users at Ad 70", "% of Users at Ad 100",
-                "Avg ads per users"
+                "Total Level Retention(20)", "Total Level Retention(50)",
+                "Total Level Retention(75)", "Total Level Retention(100)",
+                "Total Level Retention(150)", "Total Level Retention(200)",
+                "% of Users at Ad 10", "% of Users at Ad 20", "% of Users at Ad 40",
+                "% of Users at Ad 70", "% of Users at Ad 100", "Avg ads per users",
+                "Day 1 Retention", "Day 3 Retention", "Session Length", "Playtime length"
             ],
             "Value": [
-                version, selected_date.strftime('%Y-%m-%d'), check_date,
-                level1_users, retention_20, retention_50, retention_75,
-                retention_100, retention_150, retention_200,
-                f"{day1_ret}%", f"{day3_ret}%",
-                f"{session_len} s", f"{playtime_len} s",
-                ad_10, ad_20, ad_40, ad_70, ad_100,
-                avg_ads_user
+                version, date_selected.strftime("%d-%b-%y"), check_date.strftime("%d-%b-%y"),
+                max_users,
+                f"{df1[df1['LEVEL_CLEAN'] == 20]['Retention %'].values[0]}%" if 20 in df1['LEVEL_CLEAN'].values else "N/A",
+                f"{df1[df1['LEVEL_CLEAN'] == 50]['Retention %'].values[0]}%" if 50 in df1['LEVEL_CLEAN'].values else "N/A",
+                f"{df1[df1['LEVEL_CLEAN'] == 75]['Retention %'].values[0]}%" if 75 in df1['LEVEL_CLEAN'].values else "N/A",
+                f"{df1[df1['LEVEL_CLEAN'] == 100]['Retention %'].values[0]}%" if 100 in df1['LEVEL_CLEAN'].values else "N/A",
+                f"{df1[df1['LEVEL_CLEAN'] == 150]['Retention %'].values[0]}%" if 150 in df1['LEVEL_CLEAN'].values else "N/A",
+                f"{df1[df1['LEVEL_CLEAN'] == 200]['Retention %'].values[0]}%" if 200 in df1['LEVEL_CLEAN'].values else "N/A",
+                f"{df2[df2['EVENT_CLEAN'] == 10]['% of Users at Ad'].values[0]}%" if 10 in df2['EVENT_CLEAN'].values else "N/A",
+                f"{df2[df2['EVENT_CLEAN'] == 20]['% of Users at Ad'].values[0]}%" if 20 in df2['EVENT_CLEAN'].values else "N/A",
+                f"{df2[df2['EVENT_CLEAN'] == 40]['% of Users at Ad'].values[0]}%" if 40 in df2['EVENT_CLEAN'].values else "N/A",
+                f"{df2[df2['EVENT_CLEAN'] == 70]['% of Users at Ad'].values[0]}%" if 70 in df2['EVENT_CLEAN'].values else "N/A",
+                f"{df2[df2['EVENT_CLEAN'] == 100]['% of Users at Ad'].values[0]}%" if 100 in df2['EVENT_CLEAN'].values else "N/A",
+                total_avg_ads, "", "", "", ""
             ]
         }
-
         df_summary = pd.DataFrame(summary_data)
-
-        st.subheader("📋 Game Analytics Summary")
         st.dataframe(df_summary, use_container_width=True)
 
-        if st.button("Update Summary Table"):
-            df_summary.loc[df_summary['Metric'] == "Day 1 Retention", 'Value'] = f"{day1_ret}%"
-            df_summary.loc[df_summary['Metric'] == "Day 3 Retention", 'Value'] = f"{day3_ret}%"
-            df_summary.loc[df_summary['Metric'] == "Session Length", 'Value'] = f"{session_len} s"
-            df_summary.loc[df_summary['Metric'] == "Playtime length", 'Value'] = f"{playtime_len} s"
-            st.success("✅ Summary table updated with manual values.")
+        st.subheader("✍️ Manual Metrics Entry")
+        day1_ret = st.text_input("Day 1 Retention (%)", value="29.56%")
+        day3_ret = st.text_input("Day 3 Retention (%)", value="13.26%")
+        session_len = st.text_input("Session Length (sec)", value="264.5")
+        playtime_len = st.text_input("Playtime Length (sec)", value="936.6")
 
-        st.subheader("📊 Retention Chart (Levels 1–100)")
-        fig, ax = plt.subplots(figsize=(14, 6))
-        df1_100 = df1[df1['LEVEL_CLEAN'] <= 100]
+        if st.button("Update Summary"):
+            df_summary.loc[df_summary['Metric'] == "Day 1 Retention", 'Value'] = day1_ret
+            df_summary.loc[df_summary['Metric'] == "Day 3 Retention", 'Value'] = day3_ret
+            df_summary.loc[df_summary['Metric'] == "Session Length", 'Value'] = session_len + " s"
+            df_summary.loc[df_summary['Metric'] == "Playtime length", 'Value'] = playtime_len + " s"
+            st.success("✅ Manual metrics updated.")
 
-        ax.plot(df1_100['LEVEL_CLEAN'], df1_100['Retention %'], marker='o', color='orange', label='RETENTION')
-        ax.set_xlim(1, 100)
-        ax.set_ylim(0, 100)
-        ax.set_xticks(np.arange(1, 101, 5))
-        ax.set_yticks(np.arange(0, 121, 10))
-        ax.set_xlabel("Level")
-        ax.set_ylabel("% Of Users")
-        ax.set_title(f"Retention Chart (Levels 1 - 100)  Version {version}")
-        ax.legend()
-        ax.grid(True, linestyle='--', linewidth=0.5)
+        st.subheader("📥 Export Excel Report")
 
-        st.pyplot(fig)
+        if st.button("Generate & Download Excel"):
+            output = BytesIO()
+            writer = pd.ExcelWriter(output, engine='xlsxwriter')
+            df_summary.to_excel(writer, index=False, sheet_name='Summary')
+            workbook = writer.book
+            worksheet = writer.sheets['Summary']
 
-if __name__ == '__main__':
+            # Save chart image to BytesIO
+            chart_buffer = BytesIO()
+            fig.savefig(chart_buffer, format='png')
+            worksheet.insert_image('E2', 'retention_chart.png', {'image_data': chart_buffer})
+            writer.close()
+
+            st.download_button(
+                label="📩 Download Excel File",
+                data=output.getvalue(),
+                file_name=f"DP1GAME_METRIX_{version}.xlsx",
+                mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+            )
+
+if __name__ == "__main__":
     main()
