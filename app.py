@@ -4,6 +4,8 @@ import numpy as np
 import re
 import datetime
 import matplotlib.pyplot as plt
+from io import BytesIO
+import xlsxwriter
 
 st.set_page_config(page_title="DP1GAME METRIX", layout="wide")
 st.title("📊 DP1GAME METRIX Dashboard")
@@ -62,7 +64,6 @@ def main():
             st.error("❌ Required columns not found in file 2.")
             return
 
-        # --- Chart ---
         st.subheader("📈 Retention Chart (Levels 1–100)")
         fig, ax = plt.subplots(figsize=(10, 5))
         df1_100 = df1[df1['LEVEL_CLEAN'] <= 100]
@@ -77,7 +78,6 @@ def main():
         ax.grid(True, which='both', linestyle='--', linewidth=0.5)
         st.pyplot(fig)
 
-        # --- Final Summary Table ---
         st.subheader("📋 Final Summary Table")
         summary_data = {
             "Metric": [
@@ -87,6 +87,7 @@ def main():
                 "Total Level Retention(150)", "Total Level Retention(200)",
                 "% of Users at Ad 10", "% of Users at Ad 20", "% of Users at Ad 40",
                 "% of Users at Ad 70", "% of Users at Ad 100", "Avg ads per users",
+                "Day 1 Retention", "Day 3 Retention", "Session Length", "Playtime length"
             ],
             "Value": [
                 version, date_selected.strftime("%d-%b-%y"), check_date.strftime("%d-%b-%y"),
@@ -102,45 +103,46 @@ def main():
                 f"{df2[df2['EVENT_CLEAN'] == 40]['% of Users at Ad'].values[0]}%" if 40 in df2['EVENT_CLEAN'].values else "N/A",
                 f"{df2[df2['EVENT_CLEAN'] == 70]['% of Users at Ad'].values[0]}%" if 70 in df2['EVENT_CLEAN'].values else "N/A",
                 f"{df2[df2['EVENT_CLEAN'] == 100]['% of Users at Ad'].values[0]}%" if 100 in df2['EVENT_CLEAN'].values else "N/A",
-                total_avg_ads
+                total_avg_ads, "", "", "", ""
             ]
         }
+        df_summary = pd.DataFrame(summary_data)
+        st.dataframe(df_summary, use_container_width=True)
 
-        df_summary = pd.DataFrame(summary_data).set_index("Metric")
+        st.subheader("✍️ Manual Metrics Entry")
+        day1_ret = st.text_input("Day 1 Retention (%)", value="29.56%")
+        day3_ret = st.text_input("Day 3 Retention (%)", value="13.26%")
+        session_len = st.text_input("Session Length (sec)", value="264.5")
+        playtime_len = st.text_input("Playtime Length (sec)", value="936.6")
 
-        # --- STEP 6: MANUAL METRICS SECTION --- #
-        st.subheader("📝 Step 6: Pasteable Manual Metrics")
-        tab1, tab2 = st.tabs(["📥 Manual Input", "📋 Copy Summary"])
+        if st.button("Update Summary"):
+            df_summary.loc[df_summary['Metric'] == "Day 1 Retention", 'Value'] = day1_ret
+            df_summary.loc[df_summary['Metric'] == "Day 3 Retention", 'Value'] = day3_ret
+            df_summary.loc[df_summary['Metric'] == "Session Length", 'Value'] = session_len + " s"
+            df_summary.loc[df_summary['Metric'] == "Playtime length", 'Value'] = playtime_len + " s"
+            st.success("✅ Manual metrics updated.")
 
-        with tab1:
-            st.markdown("### 🔧 Enter Manual Metrics Here:")
-            day1_retention = st.text_input("Day 1 Retention (%)", value="29.56%")
-            day3_retention = st.text_input("Day 3 Retention (%)", value="13.26%")
-            session_length = st.text_input("Session Length (in sec)", value="264.5")
-            playtime_length = st.text_input("Playtime Length (in sec)", value="936.6")
+        st.subheader("📥 Export Excel Report")
 
-            if st.button("Update Summary Table"):
-                manual_updates = {
-                    "Day 1 Retention": day1_retention,
-                    "Day 3 Retention": day3_retention,
-                    "Session Length": f"{session_length} s",
-                    "Playtime length": f"{playtime_length} s"
-                }
+        if st.button("Generate & Download Excel"):
+            output = BytesIO()
+            writer = pd.ExcelWriter(output, engine='xlsxwriter')
+            df_summary.to_excel(writer, index=False, sheet_name='Summary')
+            workbook = writer.book
+            worksheet = writer.sheets['Summary']
 
-                for metric, value in manual_updates.items():
-                    if metric in df_summary.index:
-                        df_summary.loc[metric] = value
-                    else:
-                        df_summary = pd.concat([
-                            df_summary,
-                            pd.DataFrame([[value]], index=[metric], columns=["Value"])
-                        ])
+            # Save chart image to BytesIO
+            chart_buffer = BytesIO()
+            fig.savefig(chart_buffer, format='png')
+            worksheet.insert_image('E2', 'retention_chart.png', {'image_data': chart_buffer})
+            writer.close()
 
-                st.success("✅ Summary table updated with manual values.")
-
-        with tab2:
-            st.markdown("### 📋 Final Summary Table (Paste Anywhere)")
-            st.dataframe(df_summary, use_container_width=True)
+            st.download_button(
+                label="📩 Download Excel File",
+                data=output.getvalue(),
+                file_name=f"DP1GAME_METRIX_{version}.xlsx",
+                mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+            )
 
 if __name__ == "__main__":
     main()
