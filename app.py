@@ -7,12 +7,28 @@ import matplotlib.pyplot as plt
 from io import BytesIO
 import xlsxwriter
 
-# App setup
+# Streamlit App Setup
 st.set_page_config(page_title="DP1GAME METRIX", layout="wide")
 st.title("📊 DP1GAME METRIX Dashboard")
 
+def generate_excel(df_summary, fig):
+    output = BytesIO()
+    with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
+        df_summary.to_excel(writer, index=False, sheet_name='Summary')
+        workbook = writer.book
+        worksheet = writer.sheets['Summary']
+        
+        # Insert the chart image
+        chart_img = BytesIO()
+        fig.savefig(chart_img, format='png')
+        chart_img.seek(0)
+        worksheet.insert_image('D3', 'chart.png', {'image_data': chart_img})
+
+    output.seek(0)
+    return output
+
 def main():
-    st.subheader("Step 1: Upload Files")
+    st.subheader("📁 Step 1: Upload Files")
     col1, col2 = st.columns(2)
 
     with col1:
@@ -21,9 +37,16 @@ def main():
         file2 = st.file_uploader("📥 Upload Ad Event File", type=["csv"])
 
     st.subheader("📝 Editable Fields")
-    version = st.text_input("Enter Version (e.g. v1.2.3)", value="v1.0.0")
+    version = st.text_input("Enter Version", value="v0.58")
     date_selected = st.date_input("Date Selected", value=datetime.date.today())
     check_date = st.date_input("Check Date", value=datetime.date.today() + datetime.timedelta(days=1))
+    day1_ret = st.text_input("Day 1 Retention (%)", value="29.56%")
+    day3_ret = st.text_input("Day 3 Retention (%)", value="13.26%")
+    session_len = st.text_input("Session Length (sec)", value="264.5")
+    playtime_len = st.text_input("Playtime Length (sec)", value="936.6")
+
+    if st.button("🔁 Update Metrics"):
+        st.experimental_rerun()
 
     if file1 and file2:
         df1 = pd.read_csv(file1)
@@ -35,7 +58,6 @@ def main():
             df1.dropna(inplace=True)
             df1['LEVEL_CLEAN'] = df1['LEVEL_CLEAN'].astype(int)
             df1.sort_values('LEVEL_CLEAN', inplace=True)
-
             max_users = df1['USERS'].max()
             df1['Retention %'] = round((df1['USERS'] / max_users) * 100, 2)
             st.success("✅ Retention data cleaned successfully!")
@@ -65,7 +87,7 @@ def main():
             st.error("❌ Required columns not found in file 2.")
             return
 
-        # Plotting chart
+        # Chart plot
         st.subheader("📈 Retention Chart (Levels 1–100)")
         fig, ax = plt.subplots(figsize=(10, 5))
         df1_100 = df1[df1['LEVEL_CLEAN'] <= 100]
@@ -76,19 +98,12 @@ def main():
         ax.set_xticks(np.arange(1, 101, 5))
         ax.set_xlabel("Level")
         ax.set_ylabel("% Retention")
-        ax.set_title(f"➤ Retention Chart (Levels 1–100) | Version: {version}")
-        ax.tick_params(axis='x', labelsize=6)  # 👈 Decreased X-axis text size
+        ax.set_title(f"Retention Chart (Levels 1–100) | Version: {version}")
+        ax.tick_params(axis='x', labelsize=6)
         ax.grid(True, which='both', linestyle='--', linewidth=0.5)
         st.pyplot(fig)
 
-        # Manual metric inputs
-        st.subheader("✍️ Manual Metrics Entry")
-        day1_ret = st.text_input("Day 1 Retention (%)", value="29.56%")
-        day3_ret = st.text_input("Day 3 Retention (%)", value="13.26%")
-        session_len = st.text_input("Session Length (sec)", value="264.5")
-        playtime_len = st.text_input("Playtime Length (sec)", value="936.6")
-
-        # Summary table
+        # Summary Table
         st.subheader("📋 Final Summary Table")
         summary_data = {
             "Metric": [
@@ -98,9 +113,9 @@ def main():
                 "Total Level Retention(150)", "Total Level Retention(200)",
                 "Day 1 Retention", "Day 3 Retention",
                 "Session Length", "Playtime length",
-                "% of Users at Ad 10", "% of Users at Ad 20", "% of Users at Ad 40",
-                "% of Users at Ad 70", "% of Users at Ad 100",
-                "Avg ads per users"
+                "% of Users at Ad 10", "% of Users at Ad 20",
+                "% of Users at Ad 40", "% of Users at Ad 70",
+                "% of Users at Ad 100", "Avg ads per users"
             ],
             "Value": [
                 version,
@@ -126,5 +141,22 @@ def main():
         df_summary = pd.DataFrame(summary_data)
         st.dataframe(df_summary, use_container_width=True)
 
-if __name__ == '__main__':
+        # Download Buttons
+        st.subheader("📤 Export Options")
+        st.download_button(
+            label="⬇️ Download Table Only (CSV)",
+            data=df_summary.to_csv(index=False).encode('utf-8'),
+            file_name="summary_table.csv",
+            mime='text/csv'
+        )
+
+        excel_output = generate_excel(df_summary, fig)
+        st.download_button(
+            label="⬇️ Download Summary + Chart (Excel)",
+            data=excel_output,
+            file_name="summary_with_chart.xlsx",
+            mime='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+        )
+
+if __name__ == "__main__":
     main()
