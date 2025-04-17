@@ -244,9 +244,6 @@ def main():
         df_summary_Progression= df1[['LEVEL_CLEAN', 'USERS', 'Retention %', 'Drop']].rename(columns={'LEVEL_CLEAN': 'Level'})
 
         st.subheader("⬇️ Download Excel Report")
-
-        st.dataframe(df_summary_Progression)
-
         # Show summary table
         st.dataframe(df_summary)
 
