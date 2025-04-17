@@ -12,13 +12,14 @@ st.set_page_config(page_title="DP1GAME METRIX", layout="wide")
 st.title("📊 DP1GAME METRIX Dashboard")
 
 # -------------------- FUNCTION TO EXPORT EXCEL -------------------- #
-from io import BytesIO
-import pandas as pd
 
-def generate_excel(df_summary, retention_fig, drop_fig):
+def generate_excel(df_summary, df_summary_Progression, retention_fig, drop_fig):
     output = BytesIO()
     with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
         df_summary.to_excel(writer, index=False, sheet_name='Summary', startrow=0, startcol=0)
+    output = BytesIO()
+    with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
+        df_summary_Progression.to_excel(writer, index=False, sheet_name='Summary', startrow=0, startcol=0)
 
         workbook = writer.book
         worksheet = writer.sheets['Summary']
