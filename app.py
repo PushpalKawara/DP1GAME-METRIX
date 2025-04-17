@@ -147,11 +147,11 @@ def main():
         ax.set_title(f"Retention Chart (Levels 1 - 100) | Version {version} | Date: {date_selected.strftime('%d-%m-%Y')}",
                      fontsize=12, fontweight='bold')
 
-        ax.tick_params(axis='x', labelsize=5)
+        ax.tick_params(axis='x', labelsize=6)
         ax.grid(True, linestyle='--', linewidth=0.5)
 
         for x, y in zip(df1_100['LEVEL_CLEAN'], df1_100['Retention %']):
-            ax.text(x, -4, f"{int(y)}", ha='center', va='top', fontsize=6)
+            ax.text(x, -4, f"{int(y)}", ha='center', va='top', fontsize=7)
 
         ax.legend(loc='lower left', fontsize=8)
         plt.tight_layout()
@@ -170,13 +170,13 @@ def main():
         ax2.set_title(f"Drop Chart (Levels 1 - 100) | Version {version} | Date: {date_selected.strftime('%d-%m-%Y')}",
                       fontsize=12, fontweight='bold')
 
-        ax2.tick_params(axis='x', labelsize=5)
+        ax2.tick_params(axis='x', labelsize=6)
         ax2.grid(True, linestyle='--', linewidth=0.5)
 
         for bar in bars:
             x = bar.get_x() + bar.get_width() / 2
             y = bar.get_height()
-            ax2.text(x, -2, f"{y:.0f}%", ha='center', va='top', fontsize=7)
+            ax2.text(x, -2, f"{y:.0f}", ha='center', va='top', fontsize=7)
 
         ax2.legend(loc='upper right', fontsize=8)
         plt.tight_layout()
