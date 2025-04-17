@@ -240,7 +240,7 @@ def main():
                 df_summary = df_summary.reset_index()
 
         # -------------------- DOWNLOAD FINAL EXCEL -------------------- #
-        df_summary1= df1[['LEVEL_CLEAN', 'USERS', 'Retention %', 'Drop']].rename(columns={'LEVEL_CLEAN': 'Level'})
+        df_summary_Progression= df1[['LEVEL_CLEAN', 'USERS', 'Retention %', 'Drop']].rename(columns={'LEVEL_CLEAN': 'Level'})
 
         st.subheader("⬇️ Download Excel Report")
 
@@ -248,7 +248,7 @@ def main():
         st.dataframe(df_summary)
 
         # Generate and offer download button
-        excel_data = generate_excel(df_summary,df_summary1, retention_fig, drop_fig)
+        excel_data = generate_excel(df_summary, df_summary_Progression, retention_fig, drop_fig)
         st.download_button(
              label="📥 Download Excel Report",
              data=excel_data,
