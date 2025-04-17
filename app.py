@@ -244,6 +244,8 @@ def main():
 
         st.subheader("⬇️ Download Excel Report")
 
+        st.dataframe(df_summary_Progression)
+
         # Show summary table
         st.dataframe(df_summary)
 
