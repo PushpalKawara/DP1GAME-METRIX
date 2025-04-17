@@ -90,7 +90,7 @@ def main():
             df2['EVENT_CLEAN'] = df2['EVENT_CLEAN'].astype(int)
             df2 = df2.sort_values('EVENT_CLEAN').reset_index(drop=True)
 
-            max_users = df2['USERS'].max()
+            max_users = df1['USERS'].max()
             first_row = pd.DataFrame({'EVENT': ['Assumed_0'], 'USERS': [max_users], 'EVENT_CLEAN': [0]})
             df2 = pd.concat([first_row, df2], ignore_index=True).sort_values('EVENT_CLEAN').reset_index(drop=True)
 
@@ -151,7 +151,7 @@ def main():
         ax.grid(True, linestyle='--', linewidth=0.5)
 
         for x, y in zip(df1_100['LEVEL_CLEAN'], df1_100['Retention %']):
-            ax.text(x, -4, f"{int(y)}%", ha='center', va='top', fontsize=6)
+            ax.text(x, -4, f"{int(y)}", ha='center', va='top', fontsize=6)
 
         ax.legend(loc='lower left', fontsize=8)
         plt.tight_layout()
@@ -176,7 +176,7 @@ def main():
         for bar in bars:
             x = bar.get_x() + bar.get_width() / 2
             y = bar.get_height()
-            ax2.text(x, -2, f"{y:.0f}%", ha='center', va='top', fontsize=6)
+            ax2.text(x, -2, f"{y:.0f}%", ha='center', va='top', fontsize=7)
 
         ax2.legend(loc='upper right', fontsize=8)
         plt.tight_layout()
