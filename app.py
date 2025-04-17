@@ -102,19 +102,28 @@ def main():
             ad70 = df2[df2['EVENT_CLEAN'] == 70]['% of Users at Ad'].values[0] if 70 in df2['EVENT_CLEAN'].values else 0
             ad100 = df2[df2['EVENT_CLEAN'] == 100]['% of Users at Ad'].values[0] if 100 in df2['EVENT_CLEAN'].values else 0
 
+            # Step 1: Difference of Ads (EVENT_CLEAN)
             df2['Diff of Ads'] = df2['EVENT_CLEAN'].diff().fillna(df2['EVENT_CLEAN']).astype(int)
-            df2['Multi'] = df2['Diff of Ads'] * df2['USERS']
 
-            event_diffs = df2['EVENT_CLEAN'].diff().dropna().tolist()
-            avg_diff = round(sum(event_diffs) / len(event_diffs), 2)
+             # Step 2: sum1 = USERS × Diff of Ads  
+             df2['Multi1'] = df2['USERS'] * df2['Diff of Ads']
+             sum1 = df2['Multi1'].sum()
 
-            df2['Diff of Users'] = df2['USERS'].diff().fillna(0).astype(int)
-            df2['Multi 2'] = avg_diff * df2['Diff of Users']
+            # Step 3: avg of difference of ads (rolling avg of two diffs)
+            df2['Avg Diff Ads'] = (df2['Diff of Ads'] + df2['Diff of Ads'].shift(1)) / 2
+            df2['Avg Diff Ads'] = df2['Avg Diff Ads'].fillna(0)
 
-            first_sum = df2['Multi'].sum()
-            second_sum = df2['Multi 2'].sum()
+            # Step 4: Difference of Users
+            df2['Diff of Users'] = df2['USERS'].shift(1) - df2['USERS']
+            df2['Diff of Users'] = df2['Diff of Users'].fillna(0).astype(int)
 
-            avg_ads_per_user = round((first_sum + second_sum) / max_users, 2)
+            # Step 5: sum2 = Avg Diff Ads × Diff of Users
+            df2['Multi2'] = df2['Avg Diff Ads'] * df2['Diff of Users']
+            sum2 = df2['Multi2'].sum()
+
+            # Step 6: Final Average Ads Per User
+            avg_ads_per_user = round((sum1 + sum2) / max_users, 2)
+
 
             st.success(f"✅ Ad data processed successfully! Total Average Ads per User: {avg_ads_per_user}")
         else:
