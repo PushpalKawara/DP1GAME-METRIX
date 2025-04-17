@@ -102,10 +102,10 @@ def main():
             ad70 = df2[df2['EVENT_CLEAN'] == 70]['% of Users at Ad'].values[0] if 70 in df2['EVENT_CLEAN'].values else 0
             ad100 = df2[df2['EVENT_CLEAN'] == 100]['% of Users at Ad'].values[0] if 100 in df2['EVENT_CLEAN'].values else 0
 
-             Step 1: Difference of Ads
+            #Step 1: Difference of Ads
             df2['Diff of Ads'] = df2['EVENT_CLEAN'].diff().fillna(df2['EVENT_CLEAN']).astype(int)
 
-             # Step 2: Multi1 = USERS × Diff of Ads
+            # Step 2: Multi1 = USERS × Diff of Ads
             df2['Multi1'] = df2['USERS'] * df2['Diff of Ads']
             sum1 = df2['Multi1'].sum()
 
