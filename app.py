@@ -18,15 +18,9 @@ def generate_excel(df_summary, df_summary_Progression, retention_fig, drop_fig):
     with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
         df_summary.to_excel(writer, index=False, sheet_name='Summary', startrow=1, startcol=1)
 
-        workbook = writer.book
-        worksheet = writer.sheets['Summary']
+        df_summary_Progression.to_excel(writer, index=False, sheet_name='Summary', startrow=1, startcol=4)
 
-    output = BytesIO()
-
-    with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
-      df_summary_Progression.to_excel(writer, index=False, sheet_name='Summary', startrow=1, startcol=4)
-
-        workbook = writer.book
+        # workbook = writer.book
         worksheet = writer.sheets['Summary']
 
         # Adjust column width for table (A to E)
