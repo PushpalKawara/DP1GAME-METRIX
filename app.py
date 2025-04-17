@@ -223,7 +223,7 @@ def main():
 
         with tab2:
             st.dataframe(df_summary)
-            st.download_button("⬇️ Download Excel Report", data=generate_excel(df_summary, fig),
+            st.download_button("⬇️ Download Excel Report", data=generate_excel(df_summary, fig, fig2),
                                file_name=f"{version}_summary.xlsx", mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
 
 if __name__ == "__main__":
