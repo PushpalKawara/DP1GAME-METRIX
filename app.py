@@ -11,7 +11,7 @@ import xlsxwriter
 st.set_page_config(page_title="DP1GAME METRIX", layout="wide")
 st.title("📊 DP1GAME METRIX Dashboard")
 
- -------------------- FUNCTION TO EXPORT EXCEL -------------------- #
+ #-------------------- FUNCTION TO EXPORT EXCEL -------------------- #
 def generate_excel(df_summary, retention_fig, drop_fig):
     output = BytesIO()
     with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
