@@ -11,17 +11,26 @@ import xlsxwriter
 st.set_page_config(page_title="DP1GAME METRIX", layout="wide")
 st.title("📊 DP1GAME METRIX Dashboard")
 
-# -------------------- FUNCTION TO EXPORT EXCEL -------------------- #
-def generate_excel(df_summary, fig):
+ -------------------- FUNCTION TO EXPORT EXCEL -------------------- #
+def generate_excel(df_summary, retention_fig, drop_fig):
     output = BytesIO()
     with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
         df_summary.to_excel(writer, index=False, sheet_name='Summary')
         workbook = writer.book
         worksheet = writer.sheets['Summary']
-        chart_img = BytesIO()
-        fig.savefig(chart_img, format='png')
-        chart_img.seek(0)
-        worksheet.insert_image('D3', 'chart.png', {'image_data': chart_img})
+
+        # Insert Retention Chart
+        retention_img = BytesIO()
+        retention_fig.savefig(retention_img, format='png')
+        retention_img.seek(0)
+        worksheet.insert_image('D3', 'retention_chart.png', {'image_data': retention_img})
+
+        # Insert Drop Chart below it (adjust cell as needed)
+        drop_img = BytesIO()
+        drop_fig.savefig(drop_img, format='png')
+        drop_img.seek(0)
+        worksheet.insert_image('D25', 'drop_chart.png', {'image_data': drop_img})  # Adjust position if needed
+
     output.seek(0)
     return output
 
@@ -219,11 +228,18 @@ def main():
                 df_summary.loc["Session Length"] = f"{session_length} s"
                 df_summary.loc["Playtime Length"] = f"{playtime_length} s"
                 df_summary = df_summary.reset_index()
+         
 
-        with tab2:
-            st.dataframe(df_summary)
-            st.download_button("⬇️ Download Excel Report", data=generate_excel(df_summary, fig),
-                               file_name=f"{version}_summary.xlsx", mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+         # -------------------- DOWNLOAD FINAL EXCEL -------------------- #
+       
+        st.subheader("⬇️ Download Excel Report")
+        excel_data = generate_excel(df1, fig, fig2)
+        st.download_button(
+           label="📥 Download Excel Report",
+           data=excel_data,
+           file_name=f"DP1_METRIX_Report_{version}.xlsx",
+           mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+         )
 
 if __name__ == "__main__":
     main()
