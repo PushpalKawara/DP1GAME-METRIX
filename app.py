@@ -6,7 +6,7 @@ import datetime
 import matplotlib.pyplot as plt
 from io import BytesIO
 import xlsxwriter
-
+import workbook
 # -------------------- STREAMLIT APP SETUP -------------------- #
 st.set_page_config(page_title="DP1GAME METRIX", layout="wide")
 st.title("📊 DP1GAME METRIX Dashboard")
@@ -17,9 +17,14 @@ def generate_excel(df_summary, df_summary_Progression, retention_fig, drop_fig):
     output = BytesIO()
     with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
         df_summary.to_excel(writer, index=False, sheet_name='Summary', startrow=1, startcol=1)
+
+        workbook = writer.book
+        worksheet = writer.sheets['Summary']
+
     output = BytesIO()
+
     with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
-        df_summary_Progression.to_excel(writer, index=False, sheet_name='Summary', startrow=1, startcol=4)
+      df_summary_Progression.to_excel(writer, index=False, sheet_name='Summary', startrow=1, startcol=4)
 
         workbook = writer.book
         worksheet = writer.sheets['Summary']
@@ -93,7 +98,7 @@ def main():
             retention_150 = round(df1[df1['LEVEL_CLEAN'] == 150]['Retention %'].values[0], 2) if 150 in df1['LEVEL_CLEAN'].values else 0
             retention_200 = round(df1[df1['LEVEL_CLEAN'] == 200]['Retention %'].values[0], 2) if 200 in df1['LEVEL_CLEAN'].values else 0
 
-            st.success("✅ File 1 cleaned and Retention/Drop calculated successfully!")
+            # st.success("✅ File 1 cleaned and Retention/Drop calculated successfully!")
         else:
             st.error("❌ Required columns not found in file 1.")
             return
