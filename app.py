@@ -41,7 +41,6 @@ def main():
     check_date = st.date_input("Check Date", value=datetime.date.today() + datetime.timedelta(days=1))
 
     if file1 and file2:
-        # -------------------- PROCESS FILE 1 -------------------- #
         df1 = pd.read_csv(file1)
         df1.columns = df1.columns.str.strip().str.upper()
 
@@ -67,12 +66,18 @@ def main():
             df1['Drop'] = ((df1['USERS'] - df1['USERS'].shift(-1)) / df1['USERS']).fillna(0) * 100
             df1['Drop'] = df1['Drop'].round(2)
 
+            retention_20 = round(df1[df1['LEVEL_CLEAN'] == 20]['Retention %'].values[0], 2) if 20 in df1['LEVEL_CLEAN'].values else 0
+            retention_50 = round(df1[df1['LEVEL_CLEAN'] == 50]['Retention %'].values[0], 2) if 50 in df1['LEVEL_CLEAN'].values else 0
+            retention_75 = round(df1[df1['LEVEL_CLEAN'] == 75]['Retention %'].values[0], 2) if 75 in df1['LEVEL_CLEAN'].values else 0
+            retention_100 = round(df1[df1['LEVEL_CLEAN'] == 100]['Retention %'].values[0], 2) if 100 in df1['LEVEL_CLEAN'].values else 0
+            retention_150 = round(df1[df1['LEVEL_CLEAN'] == 150]['Retention %'].values[0], 2) if 150 in df1['LEVEL_CLEAN'].values else 0
+            retention_200 = round(df1[df1['LEVEL_CLEAN'] == 200]['Retention %'].values[0], 2) if 200 in df1['LEVEL_CLEAN'].values else 0
+
             st.success("✅ File 1 cleaned and Retention/Drop calculated successfully!")
         else:
             st.error("❌ Required columns not found in file 1.")
             return
 
-        # -------------------- PROCESS FILE 2 -------------------- #
         df2 = pd.read_csv(file2)
         df2.columns = df2.columns.str.strip()
 
@@ -90,6 +95,13 @@ def main():
             df2 = pd.concat([first_row, df2], ignore_index=True).sort_values('EVENT_CLEAN').reset_index(drop=True)
 
             df2['% of Users at Ad'] = round((df2['USERS'] / max_users) * 100, 2)
+
+            ad10 = df2[df2['EVENT_CLEAN'] == 10]['% of Users at Ad'].values[0] if 10 in df2['EVENT_CLEAN'].values else 0
+            ad20 = df2[df2['EVENT_CLEAN'] == 20]['% of Users at Ad'].values[0] if 20 in df2['EVENT_CLEAN'].values else 0
+            ad40 = df2[df2['EVENT_CLEAN'] == 40]['% of Users at Ad'].values[0] if 40 in df2['EVENT_CLEAN'].values else 0
+            ad70 = df2[df2['EVENT_CLEAN'] == 70]['% of Users at Ad'].values[0] if 70 in df2['EVENT_CLEAN'].values else 0
+            ad100 = df2[df2['EVENT_CLEAN'] == 100]['% of Users at Ad'].values[0] if 100 in df2['EVENT_CLEAN'].values else 0
+
             df2['Diff of Ads'] = df2['EVENT_CLEAN'].diff().fillna(df2['EVENT_CLEAN']).astype(int)
             df2['Multi'] = df2['Diff of Ads'] * df2['USERS']
 
@@ -161,24 +173,49 @@ def main():
         plt.tight_layout()
         st.pyplot(fig2)
 
-        # -------------------- FINAL SUMMARY -------------------- #
-        st.subheader("📋 Final Summary Table")
-        retention_20 = df1[df1['LEVEL_CLEAN'] == 20]['Retention %'].values[0] if 20 in df1['LEVEL_CLEAN'].values else None
-        summary_data = {
+        # -------------------- STEP 6: MANUAL METRICS SECTION -------------------- #
+        st.subheader("📝 Step 6: Pasteable Manual Metrics")
+        default_summary_data = {
             "Version": version,
             "Date Selected": date_selected.strftime("%d-%b-%y"),
             "Check Date": check_date.strftime("%d-%b-%y"),
             "Level 1 Users": int(max_users),
-            "Retention at Level 20": f"{retention_20}%" if retention_20 else "N/A",
-            "Average Ads per User": avg_ads_per_user
+            "Total Level Retention (20)": f"{retention_20}%",
+            "Total Level Retention (50)": f"{retention_50}%",
+            "Total Level Retention (75)": f"{retention_75}%",
+            "Total Level Retention (100)": f"{retention_100}%",
+            "Total Level Retention (150)": f"{retention_150}%",
+            "Total Level Retention (200)": f"{retention_200}%",
+            "% of Users at Ad 10": f"{ad10}%",
+            "% of Users at Ad 20": f"{ad20}%",
+            "% of Users at Ad 40": f"{ad40}%",
+            "% of Users at Ad 70": f"{ad70}%",
+            "% of Users at Ad 100": f"{ad100}%",
+            "Avg Ads per User": avg_ads_per_user
         }
-        summary_df = pd.DataFrame(list(summary_data.items()), columns=["Metric", "Value"])
-        st.dataframe(summary_df)
 
-        # -------------------- DOWNLOAD BUTTON -------------------- #
-        excel_data = generate_excel(summary_df, fig)
-        st.download_button(label="📥 Download Summary Report", data=excel_data, file_name="DP1_Metrix_Summary.xlsx")
+        df_summary = pd.DataFrame(list(default_summary_data.items()), columns=["Metric", "Value"])
 
-# -------------------- RUN APP -------------------- #
+        tab1, tab2 = st.tabs(["📥 Manual Input", "📋 Copy Summary"])
+        with tab1:
+            st.markdown("### 🔧 Enter Manual Metrics Here:")
+            day1_retention = st.text_input("Day 1 Retention (%)", value="29.56%")
+            day3_retention = st.text_input("Day 3 Retention (%)", value="13.26%")
+            session_length = st.text_input("Session Length (in sec)", value="264.5")
+            playtime_length = st.text_input("Playtime Length (in sec)", value="936.6")
+
+            if st.button("Update Summary Table"):
+                df_summary = df_summary.set_index("Metric")
+                df_summary.loc["Day 1 Retention"] = day1_retention
+                df_summary.loc["Day 3 Retention"] = day3_retention
+                df_summary.loc["Session Length"] = f"{session_length} s"
+                df_summary.loc["Playtime Length"] = f"{playtime_length} s"
+                df_summary = df_summary.reset_index()
+
+        with tab2:
+            st.dataframe(df_summary)
+            st.download_button("⬇️ Download Excel Report", data=generate_excel(df_summary, fig),
+                               file_name=f"{version}_summary.xlsx", mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+
 if __name__ == "__main__":
     main()
