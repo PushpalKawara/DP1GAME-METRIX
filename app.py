@@ -150,7 +150,7 @@ def main():
 
         # -------------------- PLOTS -------------------- #
         st.subheader("📈 Retention Chart (Levels 1–100)")
-        fig, ax = plt.subplots(figsize=(15, 6))
+        retention_fig, ax = plt.subplots(figsize=(15, 6))
         df1_100 = df1[df1['LEVEL_CLEAN'] <= 100]
 
         ax.plot(df1_100['LEVEL_CLEAN'], df1_100['Retention %'],
@@ -176,7 +176,7 @@ def main():
         st.pyplot(fig)
 
         st.subheader("📉 Drop Chart (Levels 1–100)")
-        fig2, ax2 = plt.subplots(figsize=(15, 6))
+        drop_fig, ax2 = plt.subplots(figsize=(15, 6))
         bars = ax2.bar(df1_100['LEVEL_CLEAN'], df1_100['Drop'], color='#EF5350', label='DROP RATE')
 
         ax2.set_xlim(1, 100)
