@@ -105,9 +105,9 @@ def main():
             # Step 1: Difference of Ads (EVENT_CLEAN)
             df2['Diff of Ads'] = df2['EVENT_CLEAN'].diff().fillna(df2['EVENT_CLEAN']).astype(int)
 
-             # Step 2: sum1 = USERS × Diff of Ads  
-             df2['Multi1'] = df2['USERS'] * df2['Diff of Ads']
-             sum1 = df2['Multi1'].sum()
+            # Step 2: sum1 = USERS × Diff of Ads  
+            df2['Multi1'] = df2['USERS'] * df2['Diff of Ads']
+            sum1 = df2['Multi1'].sum()
 
             # Step 3: avg of difference of ads (rolling avg of two diffs)
             df2['Avg Diff Ads'] = (df2['Diff of Ads'] + df2['Diff of Ads'].shift(1)) / 2
