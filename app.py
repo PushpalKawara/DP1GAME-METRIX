@@ -173,7 +173,7 @@ def main():
 
         ax.legend(loc='lower left', fontsize=8)
         plt.tight_layout()
-        st.pyplot(fig)
+        st.pyplot(retention_fig)
 
         st.subheader("📉 Drop Chart (Levels 1–100)")
         drop_fig, ax2 = plt.subplots(figsize=(15, 6))
@@ -198,7 +198,7 @@ def main():
 
         ax2.legend(loc='upper right', fontsize=8)
         plt.tight_layout()
-        st.pyplot(fig2)
+        st.pyplot(drop_fig)
 
         # -------------------- STEP 6: MANUAL METRICS SECTION -------------------- #
         st.subheader("📝 Step 6: Pasteable Manual Metrics")
