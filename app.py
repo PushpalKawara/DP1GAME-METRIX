@@ -94,7 +94,7 @@ def main():
         df1 = pd.read_csv(file1)
         df1.columns = df1.columns.str.strip().str.upper()
 
-        level_columns = ['LEVEL', 'LEVEL PLAYED', 'TOTALLEVEL', 'TOTALLEVELPLAYED']
+        level_columns = ['LEVEL', 'LEVEL PLAYED', 'TOTALLEVEL', 'TOTALLEVELSPLAYED']
         level_col = next((col for col in df1.columns if col in level_columns), None)
 
         if level_col and 'USERS' in df1.columns:
