@@ -11,10 +11,6 @@ st.set_page_config(page_title="DP1GAME METRIX", layout="wide")
 st.title("📊 DP1GAME METRIX Dashboard")
 
 # -------------------- FUNCTION TO EXPORT EXCEL -------------------- #
-
-from io import BytesIO
-import pandas as pd
-
 def generate_excel(df_summary, df_summary_Progression, retention_fig, drop_fig):
     # Step 1: Remove duplicate levels from df_summary_Progression
     df_summary_Progression = df_summary_Progression.drop_duplicates(subset='Level', keep='first').reset_index(drop=True)
@@ -64,8 +60,21 @@ def generate_excel(df_summary, df_summary_Progression, retention_fig, drop_fig):
         # Freeze top row
         worksheet.freeze_panes(1, 0)
 
-        # Adjust column width
-        worksheet.set_column('A:Z', 18)
+
+        # ---------------------- DYNAMIC COLUMN WIDTH ---------------------- #
+        # Set column widths dynamically for df_summary
+        for i, col in enumerate(df_summary.columns):
+            column_len = max(df_summary[col].astype(str).map(len).max(), len(col)) + 2
+            worksheet.set_column(i, i, column_len)
+
+        # Set column widths dynamically for df_summary_Progression (start at col 3)
+        for i, col in enumerate(df_summary_Progression.columns):
+            column_len = max(df_summary_Progression[col].astype(str).map(len).max(), len(col)) + 2
+            worksheet.set_column(i + 3, i + 3, column_len)
+        # ------------------------------------------------------------------ #
+
+        # # Adjust column width
+        # worksheet.set_column('A:Z', 18)
 
         # Insert Retention Chart
         retention_img = BytesIO()
