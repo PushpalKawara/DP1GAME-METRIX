@@ -12,46 +12,56 @@ st.title("📊 DP1GAME METRIX Dashboard")
 
 # -------------------- FUNCTION TO EXPORT EXCEL -------------------- #
 
+from io import BytesIO
+import pandas as pd
+
 def generate_excel(df_summary, df_summary_Progression, retention_fig, drop_fig):
+    # Step 1: Remove duplicate levels from df_summary_Progression
+    df_summary_Progression = df_summary_Progression.drop_duplicates(subset='Level', keep='first').reset_index(drop=True)
+
     output = BytesIO()
     with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
-        # Write both DataFrames to the same sheet
+        # Write df_summary from column A (0), df_summary_Progression from column D (3)
         df_summary.to_excel(writer, index=False, sheet_name='Summary', startrow=0, startcol=0)
-        df_summary_Progression.to_excel(writer, index=False, sheet_name='Summary', startrow=0, startcol=2)
+        df_summary_Progression.to_excel(writer, index=False, sheet_name='Summary', startrow=0, startcol=3)
 
         workbook = writer.book
         worksheet = writer.sheets['Summary']
 
-        # Format for header (bold + center aligned)
+        # Header format
         header_format = workbook.add_format({
             'bold': True,
             'align': 'center',
             'valign': 'vcenter',
-            'bg_color': '#D9E1F2',  # optional background color
+            'bg_color': '#D9E1F2',
             'border': 1
         })
 
-        # Format for all cells (center alignment)
+        # Cell format
         cell_format = workbook.add_format({
             'align': 'center',
             'valign': 'vcenter'
         })
 
-        # Apply header format to first row
-        for col_num, value in enumerate(df_summary.columns.tolist() + df_summary_Progression.columns.tolist()):
+        # Apply header format for df_summary
+        for col_num, value in enumerate(df_summary.columns):
             worksheet.write(0, col_num, value, header_format)
 
-        # Apply center format to all cells in df_summary
+        # Apply header format for df_summary_Progression (start from col 3)
+        for col_num, value in enumerate(df_summary_Progression.columns):
+            worksheet.write(0, col_num + 3, value, header_format)
+
+        # Apply cell format to df_summary
         for row_num in range(1, len(df_summary) + 1):
             for col_num in range(len(df_summary.columns)):
                 worksheet.write(row_num, col_num, df_summary.iloc[row_num - 1, col_num], cell_format)
 
-        # Apply center format to all cells in df_summary_Progression
-        for row_num in range(1, len(df_summary_Progression)+ 2):
+        # Apply cell format to df_summary_Progression
+        for row_num in range(1, len(df_summary_Progression) + 1):
             for col_num in range(len(df_summary_Progression.columns)):
                 worksheet.write(row_num, col_num + 3, df_summary_Progression.iloc[row_num - 1, col_num], cell_format)
 
-        # Freeze first row
+        # Freeze top row
         worksheet.freeze_panes(1, 0)
 
         # Adjust column width
@@ -71,6 +81,7 @@ def generate_excel(df_summary, df_summary_Progression, retention_fig, drop_fig):
 
     output.seek(0)
     return output
+
 # -------------------- MAIN FUNCTION -------------------- #
 def main():
     st.subheader("Step 1: Upload Files")
