@@ -61,20 +61,16 @@ def generate_excel(df_summary, df_summary_Progression, retention_fig, drop_fig):
         retention_img = BytesIO()
         retention_fig.savefig(retention_img, format='png')
         retention_img.seek(0)
-        worksheet.insert_image('H1', 'retention_chart.png', {'image_data': retention_img})
+        worksheet.insert_image('H2', 'retention_chart.png', {'image_data': retention_img})
 
         # Insert Drop Chart
         drop_img = BytesIO()
         drop_fig.savefig(drop_img, format='png')
         drop_img.seek(0)
-        worksheet.insert_image('H33', 'drop_chart.png', {'image_data': drop_img})
+        worksheet.insert_image('H31', 'drop_chart.png', {'image_data': drop_img})
 
     output.seek(0)
     return output
-
-
-
-
 # -------------------- MAIN FUNCTION -------------------- #
 def main():
     st.subheader("Step 1: Upload Files")
@@ -93,8 +89,7 @@ def main():
     if file1 and file2:
         df1 = pd.read_csv(file1)
         df1.columns = df1.columns.str.strip().str.upper()
-
-        level_columns = ['LEVEL', 'LEVEL PLAYED', 'TOTALLEVEL', 'TOTALLEVELSPLAYED']
+        level_columns = ['LEVEL','Level' ,  'LEVELPLAYED', 'TOTALLEVELPLAYED', 'TOTALLEVELSPLAYED']
         level_col = next((col for col in df1.columns if col in level_columns), None)
 
         if level_col and 'USERS' in df1.columns:
@@ -122,12 +117,10 @@ def main():
             retention_100 = round(df1[df1['LEVEL_CLEAN'] == 100]['Retention %'].values[0], 2) if 100 in df1['LEVEL_CLEAN'].values else 0
             retention_150 = round(df1[df1['LEVEL_CLEAN'] == 150]['Retention %'].values[0], 2) if 150 in df1['LEVEL_CLEAN'].values else 0
             retention_200 = round(df1[df1['LEVEL_CLEAN'] == 200]['Retention %'].values[0], 2) if 200 in df1['LEVEL_CLEAN'].values else 0
-
             # st.success("✅ File 1 cleaned and Retention/Drop calculated successfully!")
         else:
             st.error("❌ Required columns not found in file 1.")
             return
-
         df2 = pd.read_csv(file2)
         df2.columns = df2.columns.str.strip()
 
@@ -181,37 +174,7 @@ def main():
 
         # -------------------- PLOTS -------------------- #
 
-        # # -------------------- Retention Chart -------------------- #
-        # st.subheader("📈 Retention Chart (Levels 1–100)")
-        # retention_fig, ax = plt.subplots(figsize=(15, 6))
-        # df1_100 = df1[df1['LEVEL_CLEAN'] <= 100]
-
-        # ax.plot(df1_100['LEVEL_CLEAN'], df1_100['Retention %'],
-        #         linestyle='-', color='#F57C00', linewidth=2, label='RETENTION')
-
-        # ax.set_xlim(1, 100)
-        # ax.set_ylim(0, 100)
-        # ax.set_xticks(np.arange(1, 101, 1))
-        # ax.set_yticks(np.arange(0, 100, 10))
-        # ax.set_xlabel("Level")
-        # ax.set_ylabel("% Of Users")
-        # ax.set_title(f"Retention Chart (Levels 1 - 100) | Version {version} | Date: {date_selected.strftime('%d-%m-%Y')}",
-        #              fontsize=12, fontweight='bold')
-
-        # ax.tick_params(axis='x', labelsize=6)
-        # ax.grid(True, linestyle='--', linewidth=0.5)
-
-        # for x, y in zip(df1_100['LEVEL_CLEAN'], df1_100['Retention %']):
-        #     # ax.text(x, -4, f"{int(y)}", ha='center', va='top', fontsize=7)
-
-        #     # Only show Retention % below each point
-        #     ax.text(x, -6, f"{int(y)}", ha='center', va='top', fontsize=6.5, fontweight=fontweight)
-
-
-        # ax.legend(loc='lower left', fontsize=8)
-        # plt.tight_layout()
-        # st.pyplot(retention_fig)
-
+        # -------------------- Retention Chart -------------------- #
 
         st.subheader("📈 Retention Chart (Levels 1–100)")
         retention_fig, ax = plt.subplots(figsize=(15, 6))
@@ -251,11 +214,8 @@ def main():
         ax.legend(loc='lower left', fontsize=8)
         plt.tight_layout()
         st.pyplot(retention_fig)
-
-
-
+        
         # -------------------- Drop Chart -------------------- #
-
         st.subheader("📉 Drop Chart (Levels 1–100)")
         drop_fig, ax2 = plt.subplots(figsize=(15, 6))
         bars = ax2.bar(df1_100['LEVEL_CLEAN'], df1_100['Drop'], color='#EF5350', label='DROP RATE')
