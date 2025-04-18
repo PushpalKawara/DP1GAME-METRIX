@@ -39,6 +39,14 @@ def generate_excel(df_summary, df_summary_Progression, retention_fig, drop_fig):
             'valign': 'vcenter'
         })
 
+        # Red text and yellow fill format for Drop ≥ 3
+        highlight_format = workbook.add_format({
+            'font_color': 'red',
+            'bg_color': 'yellow',
+            'align': 'center',
+            'valign': 'vcenter'
+        })
+
         # Apply header format for df_summary
         for col_num, value in enumerate(df_summary.columns):
             worksheet.write(0, col_num, value, header_format)
@@ -52,10 +60,22 @@ def generate_excel(df_summary, df_summary_Progression, retention_fig, drop_fig):
             for col_num in range(len(df_summary.columns)):
                 worksheet.write(row_num, col_num, df_summary.iloc[row_num - 1, col_num], cell_format)
 
-        # Apply cell format to df_summary_Progression
+        # # Apply cell format to df_summary_Progression
+        # for row_num in range(1, len(df_summary_Progression) + 1):
+        #     for col_num in range(len(df_summary_Progression.columns)):
+        #         worksheet.write(row_num, col_num + 3, df_summary_Progression.iloc[row_num - 1, col_num], cell_format)
+
+        # Apply cell format to df_summary_Progression with conditional formatting
         for row_num in range(1, len(df_summary_Progression) + 1):
             for col_num in range(len(df_summary_Progression.columns)):
-                worksheet.write(row_num, col_num + 3, df_summary_Progression.iloc[row_num - 1, col_num], cell_format)
+                value = df_summary_Progression.iloc[row_num - 1, col_num]
+                col_name = df_summary_Progression.columns[col_num]
+
+                # Check if this is the Drop column
+                if col_name == 'Drop' and pd.notna(value) and value >= 3:
+                    worksheet.write(row_num, col_num + 3, value, highlight_format)
+                else:
+                    worksheet.write(row_num, col_num + 3, value, cell_format)
 
         # Freeze top row
         worksheet.freeze_panes(1, 0)
