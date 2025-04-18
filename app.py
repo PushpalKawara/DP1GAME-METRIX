@@ -177,7 +177,7 @@ def main():
         # -------------------- Retention Chart -------------------- #
 
         st.subheader("📈 Retention Chart (Levels 1–100)")
-        retention_fig, ax = plt.subplots(figsize=(15, 6))
+        retention_fig, ax = plt.subplots(figsize=(15, 7))
         df1_100 = df1[df1['LEVEL_CLEAN'] <= 100]
 
         ax.plot(df1_100['LEVEL_CLEAN'], df1_100['Retention %'],
@@ -189,8 +189,8 @@ def main():
         ax.set_yticks(np.arange(0, 121, 10))
 
         # Set x and y labels with padding
-        ax.set_xlabel("Level", labelpad=20)  # space between x-label and ticks
-        ax.set_ylabel("% Of Users", labelpad=20)  # space between y-label and ticks
+        ax.set_xlabel("Level", labelpad=15)  # space between x-label and ticks
+        ax.set_ylabel("% Of Users", labelpad=15)  # space between y-label and ticks
 
         ax.set_title(f"Retention Chart (Levels 1 - 100) | Version {version} | Date: {date_selected.strftime('%d-%m-%Y')}",
                      fontsize=12, fontweight='bold')
@@ -207,13 +207,14 @@ def main():
         ax.tick_params(axis='x', labelsize=6)
         ax.grid(True, linestyle='--', linewidth=0.5)
 
-        # Annotate data points below x-axis
+        #  Annotate data points BELOW x-axis without overlap
         for x, y in zip(df1_100['LEVEL_CLEAN'], df1_100['Retention %']):
-            ax.text(x, -2, f"{int(y)}", ha='center', va='top', fontsize=7)
+            ax.text(x, -5, f"{int(y)}", ha='center', va='top', fontsize=7)
 
         ax.legend(loc='lower left', fontsize=8)
         # Add space around plot to prevent label clipping
-        plt.tight_layout(rect=[1, 0.09, 2 , 1.2])  # bottom padding
+        # Fix clipping
+        plt.tight_layout(rect=[0, 0.03, 1, 0.97])
         # plt.tight_layout()
         st.pyplot(retention_fig)
 
