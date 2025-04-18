@@ -17,7 +17,7 @@ def generate_excel(df_summary, df_summary_Progression, retention_fig, drop_fig):
     with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
         # Write both DataFrames to the same sheet
         df_summary.to_excel(writer, index=False, sheet_name='Summary', startrow=0, startcol=0)
-        df_summary_Progression.to_excel(writer, index=False, sheet_name='Summary', startrow=1, startcol=len(df_summary.columns) + 1)
+        df_summary_Progression.to_excel(writer, index=False, sheet_name='Summary', startrow=0, startcol=3)
 
         workbook = writer.book
         worksheet = writer.sheets['Summary']
@@ -37,74 +37,37 @@ def generate_excel(df_summary, df_summary_Progression, retention_fig, drop_fig):
             'valign': 'vcenter'
         })
 
-        # Combine column headers
-        all_headers = df_summary.columns.tolist() + df_summary_Progression.columns.tolist()
+        # Apply header format to first row
+        for col_num, value in enumerate(df_summary.columns.tolist() + df_summary_Progression.columns.tolist()):
+            worksheet.write(0, col_num, value, header_format)
 
-
-        # # Apply header format to first row
-        # for col_num, value in enumerate(df_summary.columns.tolist() + df_summary_Progression.columns.tolist()):
-        #     worksheet.write(0, col_num, value, header_format)
-
-        # Write headers (merged from both DataFrames)
-        for col_num, header in enumerate(all_headers):
-            worksheet.write(0, col_num, header, header_format)
-
-        # # Apply center format to all cells in df_summary
-        # for row_num in range(1, len(df_summary) + 1):
-        #     for col_num in range(len(df_summary.columns)):
-        #         worksheet.write(row_num, col_num, df_summary.iloc[row_num - 1, col_num], cell_format)
-
-        # Apply center format to df_summary
-        for row_num in range(len(df_summary)):
+        # Apply center format to all cells in df_summary
+        for row_num in range(1, len(df_summary) + 1):
             for col_num in range(len(df_summary.columns)):
-                worksheet.write(row_num + 1, col_num, df_summary.iat[row_num, col_num], cell_format)
+                worksheet.write(row_num, col_num, df_summary.iloc[row_num - 1, col_num], cell_format)
 
-        # # Apply center format to all cells in df_summary_Progression
-        # for row_num in range(1, len(df_summary_Progression) + 1):
-        #     for col_num in range(len(df_summary_Progression.columns)):
-        #         worksheet.write(row_num, col_num + 3, df_summary_Progression.iloc[row_num - 1, col_num], cell_format)
-
-        # Apply center format to df_summary_Progression
-        offset_col = len(df_summary.columns) + 1
-        for row_num in range(len(df_summary_Progression)):
+        # Apply center format to all cells in df_summary_Progression
+        for row_num in range(1, len(df_summary_Progression) + 1):
             for col_num in range(len(df_summary_Progression.columns)):
-                worksheet.write(row_num + 1, col_num + offset_col, df_summary_Progression.iat[row_num, col_num], cell_format)
+                worksheet.write(row_num, col_num + 3, df_summary_Progression.iloc[row_num - 1, col_num], cell_format)
 
         # Freeze first row
         worksheet.freeze_panes(1, 0)
 
-        # # Adjust column width
-        # worksheet.set_column('A:Z', 18)
-
-        # Auto-adjust columns based on total width used
-        total_cols = len(all_headers)
-        worksheet.set_column(0, total_cols, 18)
-
-        # # Insert Retention Chart
-        # retention_img = BytesIO()
-        # retention_fig.savefig(retention_img, format='png')
-        # retention_img.seek(0)
-        # worksheet.insert_image('H1', 'retention_chart.png', {'image_data': retention_img})
-
-        # # Insert Drop Chart
-        # drop_img = BytesIO()
-        # drop_fig.savefig(drop_img, format='png')
-        # drop_img.seek(0)
-        # worksheet.insert_image('H33', 'drop_chart.png', {'image_data': drop_img})
-
+        # Adjust column width
+        worksheet.set_column('A:Z', 18)
 
         # Insert Retention Chart
         retention_img = BytesIO()
-        retention_fig.savefig(retention_img, format='png', bbox_inches='tight')
+        retention_fig.savefig(retention_img, format='png')
         retention_img.seek(0)
-        worksheet.insert_image('A40', 'retention_chart.png', {'image_data': retention_img})
+        worksheet.insert_image('H1', 'retention_chart.png', {'image_data': retention_img})
 
         # Insert Drop Chart
         drop_img = BytesIO()
-        drop_fig.savefig(drop_img, format='png', bbox_inches='tight')
+        drop_fig.savefig(drop_img, format='png')
         drop_img.seek(0)
-        worksheet.insert_image('L40', 'drop_chart.png', {'image_data': drop_img})
-
+        worksheet.insert_image('H33', 'drop_chart.png', {'image_data': drop_img})
 
     output.seek(0)
     return output
