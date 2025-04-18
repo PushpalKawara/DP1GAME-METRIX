@@ -6,7 +6,7 @@ import datetime
 import matplotlib.pyplot as plt
 from io import BytesIO
 import xlsxwriter
-# import workbook
+import workbook
 # -------------------- STREAMLIT APP SETUP -------------------- #
 st.set_page_config(page_title="DP1GAME METRIX", layout="wide")
 st.title("📊 DP1GAME METRIX Dashboard")
@@ -205,15 +205,10 @@ def main():
         for x, y in zip(df1_100['LEVEL_CLEAN'], df1_100['Retention %']):
             # ax.text(x, -4, f"{int(y)}", ha='center', va='top', fontsize=7)
 
-            # Annotate each level below the x-axis with LEVEL and Retention %
-            level_label = f"{x}"
-            retention_label = f"{int(y)}"
-
-            # Bold the level if it's a multiple of 5
+            # Only show Retention % below each point
             fontweight = 'bold' if x % 5 == 0 else 'normal'
+            ax.text(x, -6, f"{int(y)}%", ha='center', va='top', fontsize=6.5, fontweight=fontweight)
 
-            ax.text(x, -7, f"{level_label}\n{retention_label}",
-                    ha='center', va='top', fontsize=6.5, fontweight=fontweight)
 
         ax.legend(loc='lower left', fontsize=8)
         plt.tight_layout()
