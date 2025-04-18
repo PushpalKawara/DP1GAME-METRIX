@@ -206,7 +206,7 @@ def main():
 
             # Only show Retention % below each point
             fontweight = 'bold' if x % 5 == 0 else 'normal'
-            ax.text(x, -6, f"{int(y)}%", ha='center', va='top', fontsize=6.5, fontweight=fontweight)
+            ax.text(x, -6, f"{int(y)}", ha='center', va='top', fontsize=6.5, fontweight=fontweight)
 
 
         ax.legend(loc='lower left', fontsize=8)
