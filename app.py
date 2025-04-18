@@ -213,7 +213,7 @@ def main():
 
         ax.legend(loc='lower left', fontsize=8)
         # Add space around plot to prevent label clipping
-        plt.tight_layout(rect=[0, 0.03, 3 , 0.97])  # bottom padding
+        plt.tight_layout(rect=[1, 0.09, 2 , 0.97])  # bottom padding
         # plt.tight_layout()
         st.pyplot(retention_fig)
 
