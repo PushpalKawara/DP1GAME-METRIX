@@ -17,7 +17,7 @@ def generate_excel(df_summary, df_summary_Progression, retention_fig, drop_fig):
     with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
         # Write both DataFrames to the same sheet
         df_summary.to_excel(writer, index=False, sheet_name='Summary', startrow=0, startcol=0)
-        df_summary_Progression.to_excel(writer, index=False, sheet_name='Summary', startrow=0, startcol=3)
+        df_summary_Progression.to_excel(writer, index=False, sheet_name='Summary', startrow=0, startcol=2)
 
         workbook = writer.book
         worksheet = writer.sheets['Summary']
@@ -47,7 +47,7 @@ def generate_excel(df_summary, df_summary_Progression, retention_fig, drop_fig):
                 worksheet.write(row_num, col_num, df_summary.iloc[row_num - 1, col_num], cell_format)
 
         # Apply center format to all cells in df_summary_Progression
-        for row_num in range(1, len(df_summary_Progression) + 1):
+        for row_num in range(1, len(df_summary_Progression)+ 1):
             for col_num in range(len(df_summary_Progression.columns)):
                 worksheet.write(row_num, col_num + 3, df_summary_Progression.iloc[row_num - 1, col_num], cell_format)
 
@@ -181,7 +181,38 @@ def main():
 
         # -------------------- PLOTS -------------------- #
 
-        # -------------------- Retention Chart -------------------- #
+        # # -------------------- Retention Chart -------------------- #
+        # st.subheader("📈 Retention Chart (Levels 1–100)")
+        # retention_fig, ax = plt.subplots(figsize=(15, 6))
+        # df1_100 = df1[df1['LEVEL_CLEAN'] <= 100]
+
+        # ax.plot(df1_100['LEVEL_CLEAN'], df1_100['Retention %'],
+        #         linestyle='-', color='#F57C00', linewidth=2, label='RETENTION')
+
+        # ax.set_xlim(1, 100)
+        # ax.set_ylim(0, 100)
+        # ax.set_xticks(np.arange(1, 101, 1))
+        # ax.set_yticks(np.arange(0, 100, 10))
+        # ax.set_xlabel("Level")
+        # ax.set_ylabel("% Of Users")
+        # ax.set_title(f"Retention Chart (Levels 1 - 100) | Version {version} | Date: {date_selected.strftime('%d-%m-%Y')}",
+        #              fontsize=12, fontweight='bold')
+
+        # ax.tick_params(axis='x', labelsize=6)
+        # ax.grid(True, linestyle='--', linewidth=0.5)
+
+        # for x, y in zip(df1_100['LEVEL_CLEAN'], df1_100['Retention %']):
+        #     # ax.text(x, -4, f"{int(y)}", ha='center', va='top', fontsize=7)
+
+        #     # Only show Retention % below each point
+        #     ax.text(x, -6, f"{int(y)}", ha='center', va='top', fontsize=6.5, fontweight=fontweight)
+
+
+        # ax.legend(loc='lower left', fontsize=8)
+        # plt.tight_layout()
+        # st.pyplot(retention_fig)
+
+
         st.subheader("📈 Retention Chart (Levels 1–100)")
         retention_fig, ax = plt.subplots(figsize=(15, 6))
         df1_100 = df1[df1['LEVEL_CLEAN'] <= 100]
@@ -190,28 +221,37 @@ def main():
                 linestyle='-', color='#F57C00', linewidth=2, label='RETENTION')
 
         ax.set_xlim(1, 100)
-        ax.set_ylim(0, 100)
+        ax.set_ylim(0, 120)
         ax.set_xticks(np.arange(1, 101, 1))
-        ax.set_yticks(np.arange(0, 100, 10))
-        ax.set_xlabel("Level")
-        ax.set_ylabel("% Of Users")
+        ax.set_yticks(np.arange(0, 121, 10))
+
+        # Set x and y labels with padding
+        ax.set_xlabel("Level", labelpad=15)  # space between x-label and ticks
+        ax.set_ylabel("% Of Users", labelpad=15)  # space between y-label and ticks
+
         ax.set_title(f"Retention Chart (Levels 1 - 100) | Version {version} | Date: {date_selected.strftime('%d-%m-%Y')}",
                      fontsize=12, fontweight='bold')
+
+        # Customizing x tick labels: bold if multiple of 5
+        xtick_labels = []
+        for val in np.arange(1, 101, 1):
+            if val % 5 == 0:
+                xtick_labels.append(f"$\\bf{{{val}}}$")  # Bold using LaTeX formatting
+            else:
+                xtick_labels.append(str(val))
+        ax.set_xticklabels(xtick_labels, fontsize=6)
 
         ax.tick_params(axis='x', labelsize=6)
         ax.grid(True, linestyle='--', linewidth=0.5)
 
+        # Annotate data points below x-axis
         for x, y in zip(df1_100['LEVEL_CLEAN'], df1_100['Retention %']):
-            # ax.text(x, -4, f"{int(y)}", ha='center', va='top', fontsize=7)
-
-            # Only show Retention % below each point
-            fontweight = 'bold' if x % 5 == 0 else 'normal'
-            ax.text(x, -6, f"{int(y)}", ha='center', va='top', fontsize=6.5, fontweight=fontweight)
-
+            ax.text(x, -4, f"{int(y)}", ha='center', va='top', fontsize=7)
 
         ax.legend(loc='lower left', fontsize=8)
         plt.tight_layout()
         st.pyplot(retention_fig)
+
 
 
         # -------------------- Drop Chart -------------------- #
