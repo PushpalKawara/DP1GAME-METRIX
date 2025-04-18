@@ -47,7 +47,7 @@ def generate_excel(df_summary, df_summary_Progression, retention_fig, drop_fig):
                 worksheet.write(row_num, col_num, df_summary.iloc[row_num - 1, col_num], cell_format)
 
         # Apply center format to all cells in df_summary_Progression
-        for row_num in range(1, len(df_summary_Progression)+ 1):
+        for row_num in range(1, len(df_summary_Progression)+ 2):
             for col_num in range(len(df_summary_Progression.columns)):
                 worksheet.write(row_num, col_num + 3, df_summary_Progression.iloc[row_num - 1, col_num], cell_format)
 
@@ -67,7 +67,7 @@ def generate_excel(df_summary, df_summary_Progression, retention_fig, drop_fig):
         drop_img = BytesIO()
         drop_fig.savefig(drop_img, format='png')
         drop_img.seek(0)
-        worksheet.insert_image('H31', 'drop_chart.png', {'image_data': drop_img})
+        worksheet.insert_image('H37', 'drop_chart.png', {'image_data': drop_img})
 
     output.seek(0)
     return output
