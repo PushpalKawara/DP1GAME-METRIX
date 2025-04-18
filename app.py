@@ -213,7 +213,7 @@ def main():
 
         ax.legend(loc='lower left', fontsize=8)
         # Add space around plot to prevent label clipping
-        plt.tight_layout(rect=[0, 0.03, 1, 0.97])  # bottom padding
+        plt.tight_layout(rect=[0, 0.03, 3 , 0.97])  # bottom padding
         # plt.tight_layout()
         st.pyplot(retention_fig)
 
@@ -247,6 +247,8 @@ def main():
         ax2.tick_params(axis='x', labelsize=6)
         ax2.grid(True, linestyle='--', linewidth=0.5)
 
+
+        # Annotate data points below x-axis
         for bar in bars:
             x = bar.get_x() + bar.get_width() / 2
             y = bar.get_height()
