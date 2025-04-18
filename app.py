@@ -209,12 +209,14 @@ def main():
 
         # Annotate data points below x-axis
         for x, y in zip(df1_100['LEVEL_CLEAN'], df1_100['Retention %']):
-            ax.text(x, -4, f"{int(y)}", ha='center', va='top', fontsize=7)
+            ax.text(x, -2, f"{int(y)}", ha='center', va='top', fontsize=7)
 
         ax.legend(loc='lower left', fontsize=8)
-        plt.tight_layout()
+        # Add space around plot to prevent label clipping
+        plt.tight_layout(rect=[0, 0.03, 1, 0.97])  # bottom padding
+        # plt.tight_layout()
         st.pyplot(retention_fig)
-        
+
         # -------------------- Drop Chart -------------------- #
         st.subheader("📉 Drop Chart (Levels 1–100)")
         drop_fig, ax2 = plt.subplots(figsize=(15, 6))
@@ -228,6 +230,19 @@ def main():
         ax2.set_ylabel("% Of Users Dropped")
         ax2.set_title(f"Drop Chart (Levels 1 - 100) | Version {version} | Date: {date_selected.strftime('%d-%m-%Y')}",
                       fontsize=12, fontweight='bold')
+
+        # Customizing x tick labels: bold if multiple of 5
+        xtick_labels = []
+        for val in np.arange(1, 101, 1):
+            if val % 5 == 0:
+                xtick_labels.append(f"$\\bf{{{val}}}$")  # Bold using LaTeX formatting
+            else:
+                xtick_labels.append(str(val))
+        ax2.set_xticklabels(xtick_labels, fontsize=6)
+
+        ax2.tick_params(axis='x', labelsize=6)
+        ax2.grid(True, linestyle='--', linewidth=0.5)
+
 
         ax2.tick_params(axis='x', labelsize=6)
         ax2.grid(True, linestyle='--', linewidth=0.5)
