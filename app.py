@@ -6,7 +6,7 @@ import datetime
 import matplotlib.pyplot as plt
 from io import BytesIO
 import xlsxwriter
-# import workbook
+import workbook
 # -------------------- STREAMLIT APP SETUP -------------------- #
 st.set_page_config(page_title="DP1GAME METRIX", layout="wide")
 st.title("📊 DP1GAME METRIX Dashboard")
@@ -16,27 +16,59 @@ st.title("📊 DP1GAME METRIX Dashboard")
 def generate_excel(df_summary, df_summary_Progression, retention_fig, drop_fig):
     output = BytesIO()
     with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
-        df_summary.to_excel(writer, index=False, sheet_name='Summary', startrow=1, startcol=1)
+        # Write both DataFrames to the same sheet
+        df_summary.to_excel(writer, index=False, sheet_name='Summary', startrow=0, startcol=0)
+        df_summary_Progression.to_excel(writer, index=False, sheet_name='Summary', startrow=0, startcol=3)
 
-        df_summary_Progression.to_excel(writer, index=False, sheet_name='Summary', startrow=1, startcol=4)
-
-        # workbook = writer.book
+        workbook = writer.book
         worksheet = writer.sheets['Summary']
 
-        # Adjust column width for table (A to E)
-        worksheet.set_column('A:E', 18)
+        # Format for header (bold + center aligned)
+        header_format = workbook.add_format({
+            'bold': True,
+            'align': 'center',
+            'valign': 'vcenter',
+            'bg_color': '#D9E1F2',  # optional background color
+            'border': 1
+        })
 
-        # Insert Retention Chart at column K (11th col), row 5
+        # Format for all cells (center alignment)
+        cell_format = workbook.add_format({
+            'align': 'center',
+            'valign': 'vcenter'
+        })
+
+        # Apply header format to first row
+        for col_num, value in enumerate(df_summary.columns.tolist() + df_summary_Progression.columns.tolist()):
+            worksheet.write(0, col_num, value, header_format)
+
+        # Apply center format to all cells in df_summary
+        for row_num in range(1, len(df_summary) + 1):
+            for col_num in range(len(df_summary.columns)):
+                worksheet.write(row_num, col_num, df_summary.iloc[row_num - 1, col_num], cell_format)
+
+        # Apply center format to all cells in df_summary_Progression
+        for row_num in range(1, len(df_summary_Progression) + 1):
+            for col_num in range(len(df_summary_Progression.columns)):
+                worksheet.write(row_num, col_num + 3, df_summary_Progression.iloc[row_num - 1, col_num], cell_format)
+
+        # Freeze first row
+        worksheet.freeze_panes(1, 0)
+
+        # Adjust column width
+        worksheet.set_column('A:Z', 18)
+
+        # Insert Retention Chart
         retention_img = BytesIO()
         retention_fig.savefig(retention_img, format='png')
         retention_img.seek(0)
-        worksheet.insert_image('K5', 'retention_chart.png', {'image_data': retention_img})
+        worksheet.insert_image('H1', 'retention_chart.png', {'image_data': retention_img})
 
-        # Insert Drop Chart at column K, row 27 (gap of ~2 rows below previous chart)
+        # Insert Drop Chart
         drop_img = BytesIO()
         drop_fig.savefig(drop_img, format='png')
         drop_img.seek(0)
-        worksheet.insert_image('K27', 'drop_chart.png', {'image_data': drop_img})
+        worksheet.insert_image('H33', 'drop_chart.png', {'image_data': drop_img})
 
     output.seek(0)
     return output
@@ -149,6 +181,8 @@ def main():
             return
 
         # -------------------- PLOTS -------------------- #
+
+        # -------------------- Retention Chart -------------------- #
         st.subheader("📈 Retention Chart (Levels 1–100)")
         retention_fig, ax = plt.subplots(figsize=(15, 6))
         df1_100 = df1[df1['LEVEL_CLEAN'] <= 100]
@@ -157,9 +191,9 @@ def main():
                 linestyle='-', color='#F57C00', linewidth=2, label='RETENTION')
 
         ax.set_xlim(1, 100)
-        ax.set_ylim(0, 120)
+        ax.set_ylim(0, 100)
         ax.set_xticks(np.arange(1, 101, 1))
-        ax.set_yticks(np.arange(0, 121, 10))
+        ax.set_yticks(np.arange(0, 100, 10))
         ax.set_xlabel("Level")
         ax.set_ylabel("% Of Users")
         ax.set_title(f"Retention Chart (Levels 1 - 100) | Version {version} | Date: {date_selected.strftime('%d-%m-%Y')}",
@@ -169,11 +203,24 @@ def main():
         ax.grid(True, linestyle='--', linewidth=0.5)
 
         for x, y in zip(df1_100['LEVEL_CLEAN'], df1_100['Retention %']):
-            ax.text(x, -4, f"{int(y)}", ha='center', va='top', fontsize=7)
+            # ax.text(x, -4, f"{int(y)}", ha='center', va='top', fontsize=7)
+
+            # Annotate each level below the x-axis with LEVEL and Retention %
+            level_label = f"{x}"
+            retention_label = f"{int(y)}"
+
+            # Bold the level if it's a multiple of 5
+            fontweight = 'bold' if x % 5 == 0 else 'normal'
+
+            ax.text(x, -7, f"{level_label}\n{retention_label}",
+                    ha='center', va='top', fontsize=6.5, fontweight=fontweight)
 
         ax.legend(loc='lower left', fontsize=8)
         plt.tight_layout()
         st.pyplot(retention_fig)
+
+
+        # -------------------- Drop Chart -------------------- #
 
         st.subheader("📉 Drop Chart (Levels 1–100)")
         drop_fig, ax2 = plt.subplots(figsize=(15, 6))
