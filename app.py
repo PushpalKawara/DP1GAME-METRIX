@@ -189,8 +189,8 @@ def main():
         ax.set_yticks(np.arange(0, 121, 10))
 
         # Set x and y labels with padding
-        ax.set_xlabel("Level", labelpad=15)  # space between x-label and ticks
-        ax.set_ylabel("% Of Users", labelpad=15)  # space between y-label and ticks
+        ax.set_xlabel("Level", labelpad=20)  # space between x-label and ticks
+        ax.set_ylabel("% Of Users", labelpad=20)  # space between y-label and ticks
 
         ax.set_title(f"Retention Chart (Levels 1 - 100) | Version {version} | Date: {date_selected.strftime('%d-%m-%Y')}",
                      fontsize=12, fontweight='bold')
@@ -213,7 +213,7 @@ def main():
 
         ax.legend(loc='lower left', fontsize=8)
         # Add space around plot to prevent label clipping
-        plt.tight_layout(rect=[1, 0.09, 2 , 1.25])  # bottom padding
+        plt.tight_layout(rect=[1, 0.09, 2 , 1.2])  # bottom padding
         # plt.tight_layout()
         st.pyplot(retention_fig)
 
