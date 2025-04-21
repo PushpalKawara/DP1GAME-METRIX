@@ -6,6 +6,30 @@ import datetime
 import matplotlib.pyplot as plt
 from io import BytesIO
 import xlsxwriter
+
+# Dummy username & password
+USERNAME = "Pushpal@2025"
+PASSWORD = "Pushpal@202512345"
+
+if 'logged_in' not in st.session_state:
+    st.session_state.logged_in = False
+
+if not st.session_state.logged_in:
+    with st.form("login"):
+        st.subheader("🔐 Login Required")
+        username = st.text_input("Username")
+        password = st.text_input("Password", type="password")
+        login = st.form_submit_button("Login")
+
+        if login:
+            if username == USERNAME and password == PASSWORD:
+                st.session_state.logged_in = True
+                st.success("Logged in successfully!")
+            else:
+                st.error("Incorrect credentials")
+    st.stop()
+
+
 # -------------------- STREAMLIT APP SETUP -------------------- #
 st.set_page_config(page_title="DP1GAME METRIX", layout="wide")
 st.title("📊 DP1GAME METRIX Dashboard")
