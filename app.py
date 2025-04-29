@@ -84,11 +84,6 @@ def generate_excel(df_summary, df_summary_Progression, retention_fig, drop_fig):
             for col_num in range(len(df_summary.columns)):
                 worksheet.write(row_num, col_num, df_summary.iloc[row_num - 1, col_num], cell_format)
 
-        # # Apply cell format to df_summary_Progression
-        # for row_num in range(1, len(df_summary_Progression) + 1):
-        #     for col_num in range(len(df_summary_Progression.columns)):
-        #         worksheet.write(row_num, col_num + 3, df_summary_Progression.iloc[row_num - 1, col_num], cell_format)
-
         # Apply cell format to df_summary_Progression with conditional formatting
         for row_num in range(1, len(df_summary_Progression) + 1):
             for col_num in range(len(df_summary_Progression.columns)):
@@ -170,7 +165,8 @@ def main():
             df1['LEVEL_CLEAN'] = df1['LEVEL_CLEAN'].astype(int)
             df1.sort_values('LEVEL_CLEAN', inplace=True)
 
-            max_users = df1['USERS'].max()
+            # Use only Level 2's USERS as max_users
+            max_users = df1[df1['LEVEL_CLEAN'] == 2]['USERS'].values[0]
             df1['Retention %'] = round((df1['USERS'] / max_users) * 100, 2)
             df1['Drop'] = ((df1['USERS'] - df1['USERS'].shift(-1)) / df1['USERS']).fillna(0) * 100
             df1['Drop'] = df1['Drop'].round(2)
@@ -197,7 +193,8 @@ def main():
             df2['EVENT_CLEAN'] = df2['EVENT_CLEAN'].astype(int)
             df2 = df2.sort_values('EVENT_CLEAN').reset_index(drop=True)
 
-            max_users = df1['USERS'].max()
+            # Use only Level 2's USERS as max_users
+            max_users = df1[df1['LEVEL_CLEAN'] == 2]['USERS'].values[0]
             first_row = pd.DataFrame({'EVENT': ['Assumed_0'], 'USERS': [max_users], 'EVENT_CLEAN': [0]})
             df2 = pd.concat([first_row, df2], ignore_index=True).sort_values('EVENT_CLEAN').reset_index(drop=True)
 
@@ -329,7 +326,7 @@ def main():
             "Version": version,
             "Date Selected": date_selected.strftime("%d-%b-%y"),
             "Check Date": check_date.strftime("%d-%b-%y"),
-            "Level 1 Users": int(max_users),
+            "Level 2 Users": int(max_users),
             "Total Level Retention (20)": f"{retention_20}%",
             "Total Level Retention (50)": f"{retention_50}%",
             "Total Level Retention (75)": f"{retention_75}%",
