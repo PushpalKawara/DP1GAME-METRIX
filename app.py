@@ -165,8 +165,12 @@ def main():
             df1['LEVEL_CLEAN'] = df1['LEVEL_CLEAN'].astype(int)
             df1.sort_values('LEVEL_CLEAN', inplace=True)
 
-            # Use only Level 2's USERS as max_users
-            max_users = df1[df1['LEVEL_CLEAN'] == 2]['USERS'].values[0]
+            # Choose max_users based on condition between Level 1 and Level 2
+            level1_users = df1[df1['LEVEL_CLEAN'] == 1]['USERS'].values[0] if 1 in df1['LEVEL_CLEAN'].values else 0
+            level2_users = df1[df1['LEVEL_CLEAN'] == 2]['USERS'].values[0] if 2 in df1['LEVEL_CLEAN'].values else 0
+            max_users = level2_users if level2_users > level1_users else level1_users
+
+
             df1['Retention %'] = round((df1['USERS'] / max_users) * 100, 2)
             df1['Drop'] = ((df1['USERS'] - df1['USERS'].shift(-1)) / df1['USERS']).fillna(0) * 100
             df1['Drop'] = df1['Drop'].round(2)
@@ -193,8 +197,12 @@ def main():
             df2['EVENT_CLEAN'] = df2['EVENT_CLEAN'].astype(int)
             df2 = df2.sort_values('EVENT_CLEAN').reset_index(drop=True)
 
-            # Use only Level 2's USERS as max_users
-            max_users = df1[df1['LEVEL_CLEAN'] == 2]['USERS'].values[0]
+
+            # Choose max_users based on condition between Level 1 and Level 2
+            level1_users = df1[df1['LEVEL_CLEAN'] == 1]['USERS'].values[0] if 1 in df1['LEVEL_CLEAN'].values else 0
+            level2_users = df1[df1['LEVEL_CLEAN'] == 2]['USERS'].values[0] if 2 in df1['LEVEL_CLEAN'].values else 0
+            max_users = level2_users if level2_users > level1_users else level1_users
+
             first_row = pd.DataFrame({'EVENT': ['Assumed_0'], 'USERS': [max_users], 'EVENT_CLEAN': [0]})
             df2 = pd.concat([first_row, df2], ignore_index=True).sort_values('EVENT_CLEAN').reset_index(drop=True)
 
