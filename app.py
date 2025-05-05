@@ -222,6 +222,40 @@ def main():
             st.session_state.user_install = new_install
             st.success("User Install Count Updated!")
 
+    # if 'level_data' in st.session_state and 'event_data' in st.session_state:
+    #     # Get current max users
+    #     current_max_users = st.session_state.user_install if st.session_state.user_install else st.session_state.auto_max_users
+
+    #     # Recalculate metrics with current_max_users
+    #     df1 = st.session_state.level_data.copy()
+    #     df1['Retention %'] = round((df1['USERS'] / current_max_users) * 100, 2)
+    #     df1['Drop'] = ((df1['USERS'] - df1['USERS'].shift(-1)) / df1['USERS']).fillna(0) * 100
+    #     df1['Drop'] = df1['Drop'].round(2)
+
+    #     # Recalculate retention milestones
+    #     retention_20 = round(df1[df1['LEVEL_CLEAN'] == 20]['Retention %'].values[0], 2) if 20 in df1['LEVEL_CLEAN'].values else 0
+    #     retention_50 = round(df1[df1['LEVEL_CLEAN'] == 50]['Retention %'].values[0], 2) if 50 in df1['LEVEL_CLEAN'].values else 0
+    #     retention_75 = round(df1[df1['LEVEL_CLEAN'] == 75]['Retention %'].values[0], 2) if 75 in df1['LEVEL_CLEAN'].values else 0
+    #     retention_100 = round(df1[df1['LEVEL_CLEAN'] == 100]['Retention %'].values[0], 2) if 100 in df1['LEVEL_CLEAN'].values else 0
+    #     retention_150 = round(df1[df1['LEVEL_CLEAN'] == 150]['Retention %'].values[0], 2) if 150 in df1['LEVEL_CLEAN'].values else 0
+    #     retention_200 = round(df1[df1['LEVEL_CLEAN'] == 200]['Retention %'].values[0], 2) if 200 in df1['LEVEL_CLEAN'].values else 0
+
+    #     # Recalculate ad metrics
+    #     df2 = st.session_state.event_data.copy()
+    #     first_row = pd.DataFrame({'EVENT': ['Assumed_0'], 'USERS': [current_max_users], 'EVENT_CLEAN': [0]})
+    #     df2_full = pd.concat([first_row, df2], ignore_index=True).sort_values('EVENT_CLEAN').reset_index(drop=True)
+    #     df2_full['% of Users at Ad'] = round((df2_full['USERS'] / current_max_users) * 100, 2)
+        
+    #     ad10 = df2_full[df2_full['EVENT_CLEAN'] == 10]['% of Users at Ad'].values[0] if 10 in df2_full['EVENT_CLEAN'].values else 0
+    #     ad20 = df2_full[df2_full['EVENT_CLEAN'] == 20]['% of Users at Ad'].values[0] if 20 in df2_full['EVENT_CLEAN'].values else 0
+    #     ad40 = df2_full[df2_full['EVENT_CLEAN'] == 40]['% of Users at Ad'].values[0] if 40 in df2_full['EVENT_CLEAN'].values else 0
+    #     ad70 = df2_full[df2_full['EVENT_CLEAN'] == 70]['% of Users at Ad'].values[0] if 70 in df2_full['EVENT_CLEAN'].values else 0
+    #     ad100 = df2_full[df2_full['EVENT_CLEAN'] == 100]['% of Users at Ad'].values[0] if 100 in df2_full['EVENT_CLEAN'].values else 0
+
+        
+        
+    #     # Recalculate average ads
+    #     avg_ads_per_user = round((st.session_state.sum1 + st.session_state.sum2) / current_max_users, 2)
     if 'level_data' in st.session_state and 'event_data' in st.session_state:
         # Get current max users
         current_max_users = st.session_state.user_install if st.session_state.user_install else st.session_state.get('auto_max_users', 0)
@@ -233,6 +267,22 @@ def main():
         df1['Drop'] = df1['Drop'].round(2)
 
         # ... [Retention milestone calculations remain the same] ...
+        # Recalculate retention milestones
+        retention_20 = round(df1[df1['LEVEL_CLEAN'] == 20]['Retention %'].values[0], 2) if 20 in df1['LEVEL_CLEAN'].values else 0
+        retention_50 = round(df1[df1['LEVEL_CLEAN'] == 50]['Retention %'].values[0], 2) if 50 in df1['LEVEL_CLEAN'].values else 0
+        retention_75 = round(df1[df1['LEVEL_CLEAN'] == 75]['Retention %'].values[0], 2) if 75 in df1['LEVEL_CLEAN'].values else 0
+        retention_100 = round(df1[df1['LEVEL_CLEAN'] == 100]['Retention %'].values[0], 2) if 100 in df1['LEVEL_CLEAN'].values else 0
+        retention_150 = round(df1[df1['LEVEL_CLEAN'] == 150]['Retention %'].values[0], 2) if 150 in df1['LEVEL_CLEAN'].values else 0
+        retention_200 = round(df1[df1['LEVEL_CLEAN'] == 200]['Retention %'].values[0], 2) if 200 in df1['LEVEL_CLEAN'].values else 0
+        
+        ad10 = df2_full[df2_full['EVENT_CLEAN'] == 10]['% of Users at Ad'].values[0] if 10 in df2_full['EVENT_CLEAN'].values else 0
+        ad20 = df2_full[df2_full['EVENT_CLEAN'] == 20]['% of Users at Ad'].values[0] if 20 in df2_full['EVENT_CLEAN'].values else 0
+        ad40 = df2_full[df2_full['EVENT_CLEAN'] == 40]['% of Users at Ad'].values[0] if 40 in df2_full['EVENT_CLEAN'].values else 0
+        ad70 = df2_full[df2_full['EVENT_CLEAN'] == 70]['% of Users at Ad'].values[0] if 70 in df2_full['EVENT_CLEAN'].values else 0
+        ad100 = df2_full[df2_full['EVENT_CLEAN'] == 100]['% of Users at Ad'].values[0] if 100 in df2_full['EVENT_CLEAN'].values else 0
+
+
+    
 
         # Recalculate ad metrics with current_max_users
         df2 = st.session_state.event_data.copy()
@@ -252,7 +302,7 @@ def main():
         
         # Calculate average ads with current user install
         avg_ads_per_user = round((sum1 + sum2) / current_max_users, 2)  # Corrected line
-
+    
 
         
 
