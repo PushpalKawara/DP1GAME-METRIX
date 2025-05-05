@@ -8,8 +8,8 @@ from io import BytesIO
 import xlsxwriter
 
 # Dummy username & password
-USERNAME = "-----"
-PASSWORD = "---"
+USERNAME = "Pushpal@2025"
+PASSWORD = "Pushpal@202512345"
 
 if 'logged_in' not in st.session_state:
     st.session_state.logged_in = False
@@ -35,7 +35,99 @@ st.title("📊 DP1GAME METRIX Dashboard")
 
 # -------------------- FUNCTION TO EXPORT EXCEL -------------------- #
 def generate_excel(df_summary, df_summary_Progression, retention_fig, drop_fig):
-    # ... (keep the existing Excel generation code unchanged) ...
+    # Step 1: Remove duplicate levels from df_summary_Progression
+    df_summary_Progression = df_summary_Progression.drop_duplicates(subset='Level', keep='first').reset_index(drop=True)
+
+    output = BytesIO()
+    with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
+        # Write df_summary from column A (0), df_summary_Progression from column D (3)
+        df_summary.to_excel(writer, index=False, sheet_name='Summary', startrow=0, startcol=0)
+        df_summary_Progression.to_excel(writer, index=False, sheet_name='Summary', startrow=0, startcol=3)
+
+        workbook = writer.book
+        worksheet = writer.sheets['Summary']
+
+        # Header format
+        header_format = workbook.add_format({
+            'bold': True,
+            'align': 'center',
+            'valign': 'vcenter',
+            'bg_color': '#D9E1F2',
+            'border': 1
+        })
+
+        # Cell format
+        cell_format = workbook.add_format({
+            'align': 'center',
+            'valign': 'vcenter'
+        })
+
+        # Red text and yellow fill format for Drop ≥ 3
+        highlight_format = workbook.add_format({
+            'font_color': 'red',
+            'bg_color': 'yellow',
+            'align': 'center',
+            'valign': 'vcenter'
+        })
+
+        # Apply header format for df_summary
+        for col_num, value in enumerate(df_summary.columns):
+            worksheet.write(0, col_num, value, header_format)
+
+        # Apply header format for df_summary_Progression (start from col 3)
+        for col_num, value in enumerate(df_summary_Progression.columns):
+            worksheet.write(0, col_num + 3, value, header_format)
+
+        # Apply cell format to df_summary
+        for row_num in range(1, len(df_summary) + 1):
+            for col_num in range(len(df_summary.columns)):
+                worksheet.write(row_num, col_num, df_summary.iloc[row_num - 1, col_num], cell_format)
+
+        # Apply cell format to df_summary_Progression with conditional formatting
+        for row_num in range(1, len(df_summary_Progression) + 1):
+            for col_num in range(len(df_summary_Progression.columns)):
+                value = df_summary_Progression.iloc[row_num - 1, col_num]
+                col_name = df_summary_Progression.columns[col_num]
+
+                # Check if this is the Drop column
+                if col_name == 'Drop' and pd.notna(value) and value >= 3:
+                    worksheet.write(row_num, col_num + 3, value, highlight_format)
+                else:
+                    worksheet.write(row_num, col_num + 3, value, cell_format)
+
+        # Freeze top row
+        worksheet.freeze_panes(1, 0)
+
+
+        # ---------------------- DYNAMIC COLUMN WIDTH ---------------------- #
+        # Set column widths dynamically for df_summary
+        for i, col in enumerate(df_summary.columns):
+            column_len = max(df_summary[col].astype(str).map(len).max(), len(col)) + 2
+            worksheet.set_column(i, i, column_len)
+
+        # Set column widths dynamically for df_summary_Progression (start at col 3)
+        for i, col in enumerate(df_summary_Progression.columns):
+            column_len = max(df_summary_Progression[col].astype(str).map(len).max(), len(col)) + 2
+            worksheet.set_column(i + 3, i + 3, column_len)
+        # ------------------------------------------------------------------ #
+
+        # # Adjust column width
+        # worksheet.set_column('A:Z', 18)
+
+        # Insert Retention Chart
+        retention_img = BytesIO()
+        retention_fig.savefig(retention_img, format='png')
+        retention_img.seek(0)
+        worksheet.insert_image('H2', 'retention_chart.png', {'image_data': retention_img})
+
+        # Insert Drop Chart
+        drop_img = BytesIO()
+        drop_fig.savefig(drop_img, format='png')
+        drop_img.seek(0)
+        worksheet.insert_image('H37', 'drop_chart.png', {'image_data': drop_img})
+
+    output.seek(0)
+    return output
 
 # -------------------- MAIN FUNCTION -------------------- #
 def main():
@@ -160,11 +252,100 @@ def main():
         ad70 = df2_full[df2_full['EVENT_CLEAN'] == 70]['% of Users at Ad'].values[0] if 70 in df2_full['EVENT_CLEAN'].values else 0
         ad100 = df2_full[df2_full['EVENT_CLEAN'] == 100]['% of Users at Ad'].values[0] if 100 in df2_full['EVENT_CLEAN'].values else 0
 
+        
+        
         # Recalculate average ads
         avg_ads_per_user = round((st.session_state.sum1 + st.session_state.sum2) / current_max_users, 2)
 
-        # ... (keep the rest of the plotting and Excel generation code unchanged) ...
+        
 
+        # -------------------- Retention Chart -------------------- #
+
+        st.subheader("📈 Retention Chart (Levels 1–100)")
+        retention_fig, ax = plt.subplots(figsize=(15, 7))
+        df1_100 = df1[df1['LEVEL_CLEAN'] <= 100]
+
+        ax.plot(df1_100['LEVEL_CLEAN'], df1_100['Retention %'],
+                linestyle='-', color='#F57C00', linewidth=2, label='RETENTION')
+
+        ax.set_xlim(1, 100)
+        ax.set_ylim(0, 120)
+        ax.set_xticks(np.arange(1, 101, 1))
+        ax.set_yticks(np.arange(0, 121, 10))
+
+        # Set x and y labels with padding
+        ax.set_xlabel("Level", labelpad=15)  # space between x-label and ticks
+        ax.set_ylabel("% Of Users", labelpad=15)  # space between y-label and ticks
+
+        ax.set_title(f"Retention Chart (Levels 1 - 100) | Version {version} | Date: {date_selected.strftime('%d-%m-%Y')}",
+                     fontsize=12, fontweight='bold')
+
+        # Customizing x tick labels: bold if multiple of 5
+        xtick_labels = []
+        for val in np.arange(1, 101, 1):
+            if val % 5 == 0:
+                xtick_labels.append(f"$\\bf{{{val}}}$")  # Bold using LaTeX formatting
+            else:
+                xtick_labels.append(str(val))
+        ax.set_xticklabels(xtick_labels, fontsize=6)
+
+        ax.tick_params(axis='x', labelsize=6)
+        ax.grid(True, linestyle='--', linewidth=0.5)
+
+        #  Annotate data points BELOW x-axis without overlap
+        for x, y in zip(df1_100['LEVEL_CLEAN'], df1_100['Retention %']):
+            ax.text(x, -5, f"{int(y)}", ha='center', va='top', fontsize=7)
+
+        ax.legend(loc='lower left', fontsize=8)
+        # Add space around plot to prevent label clipping
+        # Fix clipping
+        plt.tight_layout(rect=[0, 0.03, 1, 0.97])
+        # plt.tight_layout()
+        st.pyplot(retention_fig)
+
+        # -------------------- Drop Chart -------------------- #
+        st.subheader("📉 Drop Chart (Levels 1–100)")
+        drop_fig, ax2 = plt.subplots(figsize=(15, 6))
+        bars = ax2.bar(df1_100['LEVEL_CLEAN'], df1_100['Drop'], color='#EF5350', label='DROP RATE')
+
+        ax2.set_xlim(1, 100)
+        ax2.set_ylim(0, max(df1_100['Drop'].max(), 10) + 10)
+        ax2.set_xticks(np.arange(1, 101, 1))
+        ax2.set_yticks(np.arange(0, max(df1_100['Drop'].max(), 10) + 11, 5))
+        ax2.set_xlabel("Level")
+        ax2.set_ylabel("% Of Users Dropped")
+        ax2.set_title(f"Drop Chart (Levels 1 - 100) | Version {version} | Date: {date_selected.strftime('%d-%m-%Y')}",
+                      fontsize=12, fontweight='bold')
+
+        # Customizing x tick labels: bold if multiple of 5
+        xtick_labels = []
+        for val in np.arange(1, 101, 1):
+            if val % 5 == 0:
+                xtick_labels.append(f"$\\bf{{{val}}}$")  # Bold using LaTeX formatting
+            else:
+                xtick_labels.append(str(val))
+        ax2.set_xticklabels(xtick_labels, fontsize=6)
+
+        ax2.tick_params(axis='x', labelsize=6)
+        ax2.grid(True, linestyle='--', linewidth=0.5)
+
+
+        ax2.tick_params(axis='x', labelsize=6)
+        ax2.grid(True, linestyle='--', linewidth=0.5)
+
+
+        # Annotate data points below x-axis
+        for bar in bars:
+            x = bar.get_x() + bar.get_width() / 2
+            y = bar.get_height()
+            ax2.text(x, -2, f"{y:.0f}", ha='center', va='top', fontsize=7)
+
+        ax2.legend(loc='upper right', fontsize=8)
+        plt.tight_layout()
+        st.pyplot(drop_fig)
+
+        # -------------------- STEP 6: MANUAL METRICS SECTION -------------------- #
+        st.subheader("📝 Step 6: Pasteable Manual Metrics")
         # Update summary data with current_max_users
         default_summary_data = {
             "Version": version,
@@ -185,7 +366,40 @@ def main():
             "Avg Ads per User": avg_ads_per_user
         }
 
-        # ... (rest of the code remains the same) ...
+        df_summary = pd.DataFrame(list(default_summary_data.items()), columns=["Metric", "Value"])
+
+        tab1, tab2 = st.tabs(["📥 Manual Input", "📋 Copy Summary"])
+        with tab1:
+            st.markdown("### 🔧 Enter Manual Metrics Here:")
+            day1_retention = st.text_input("Day 1 Retention (%)", value="29.56%")
+            day3_retention = st.text_input("Day 3 Retention (%)", value="13.26%")
+            session_length = st.text_input("Session Length (in sec)", value="264.5")
+            playtime_length = st.text_input("Playtime Length (in sec)", value="936.6")
+
+            if st.button("Update Summary Table"):
+                df_summary = df_summary.set_index("Metric")
+                df_summary.loc["Day 1 Retention"] = day1_retention
+                df_summary.loc["Day 3 Retention"] = day3_retention
+                df_summary.loc["Session Length"] = f"{session_length} s"
+                df_summary.loc["Playtime Length"] = f"{playtime_length} s"
+                df_summary = df_summary.reset_index()
+
+        # -------------------- DOWNLOAD FINAL EXCEL -------------------- #
+        df_summary_Progression= df1[['LEVEL_CLEAN', 'USERS', 'Retention %', 'Drop']].rename(columns={'LEVEL_CLEAN': 'Level'})
+
+        st.subheader("⬇️ Download Excel Report")
+        # Show summary table
+        st.dataframe(df_summary)
+
+        # Generate and offer download button
+        excel_data = generate_excel(df_summary, df_summary_Progression, retention_fig, drop_fig)
+        st.download_button(
+             label="📥 Download Excel Report",
+             data=excel_data,
+             file_name=f"DP1_METRIX_Report_{version}.xlsx",
+             mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+        )
+
 
 if __name__ == "__main__":
     main()
