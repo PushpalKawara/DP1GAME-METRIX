@@ -29,6 +29,7 @@ if not st.session_state.logged_in:
                 st.error("Incorrect credentials")
     st.stop()
 
+
 # -------------------- STREAMLIT APP SETUP -------------------- #
 st.set_page_config(page_title="DP1GAME METRIX", layout="wide")
 st.title("📊 DP1GAME METRIX Dashboard")
@@ -144,15 +145,10 @@ def main():
     date_selected = st.date_input("Date Selected", value=datetime.date.today())
     check_date = st.date_input("Check Date", value=datetime.date.today() + datetime.timedelta(days=1))
 
-    # Initialize session state variables
-    if 'user_install' not in st.session_state:
-        st.session_state.user_install = None
-
     if file1 and file2:
-        # Process files and store base data
         df1 = pd.read_csv(file1)
         df1.columns = df1.columns.str.strip().str.upper()
-        level_columns = ['LEVEL','Level','LEVELPLAYED','TOTALLEVELPLAYED','TOTALLEVELSPLAYED']
+        level_columns = ['LEVEL','Level' ,  'LEVELPLAYED', 'TOTALLEVELPLAYED', 'TOTALLEVELSPLAYED']
         level_col = next((col for col in df1.columns if col in level_columns), None)
 
         if level_col and 'USERS' in df1.columns:
@@ -169,15 +165,26 @@ def main():
             df1['LEVEL_CLEAN'] = df1['LEVEL_CLEAN'].astype(int)
             df1.sort_values('LEVEL_CLEAN', inplace=True)
 
-            # Store base data for reprocessing
-            st.session_state.level_data = df1[['LEVEL_CLEAN', 'USERS']]
-            
-            # Calculate auto_max_users
+            # Choose max_users based on condition between Level 1 and Level 2
             level1_users = df1[df1['LEVEL_CLEAN'] == 1]['USERS'].values[0] if 1 in df1['LEVEL_CLEAN'].values else 0
             level2_users = df1[df1['LEVEL_CLEAN'] == 2]['USERS'].values[0] if 2 in df1['LEVEL_CLEAN'].values else 0
-            st.session_state.auto_max_users = max(level1_users, level2_users)
+            max_users = level2_users if level2_users > level1_users else level1_users
 
-        # Process Ad Event file
+
+            df1['Retention %'] = round((df1['USERS'] / max_users) * 100, 2)
+            df1['Drop'] = ((df1['USERS'] - df1['USERS'].shift(-1)) / df1['USERS']).fillna(0) * 100
+            df1['Drop'] = df1['Drop'].round(2)
+
+            retention_20 = round(df1[df1['LEVEL_CLEAN'] == 20]['Retention %'].values[0], 2) if 20 in df1['LEVEL_CLEAN'].values else 0
+            retention_50 = round(df1[df1['LEVEL_CLEAN'] == 50]['Retention %'].values[0], 2) if 50 in df1['LEVEL_CLEAN'].values else 0
+            retention_75 = round(df1[df1['LEVEL_CLEAN'] == 75]['Retention %'].values[0], 2) if 75 in df1['LEVEL_CLEAN'].values else 0
+            retention_100 = round(df1[df1['LEVEL_CLEAN'] == 100]['Retention %'].values[0], 2) if 100 in df1['LEVEL_CLEAN'].values else 0
+            retention_150 = round(df1[df1['LEVEL_CLEAN'] == 150]['Retention %'].values[0], 2) if 150 in df1['LEVEL_CLEAN'].values else 0
+            retention_200 = round(df1[df1['LEVEL_CLEAN'] == 200]['Retention %'].values[0], 2) if 200 in df1['LEVEL_CLEAN'].values else 0
+            # st.success("✅ File 1 cleaned and Retention/Drop calculated successfully!")
+        else:
+            st.error("❌ Required columns not found in file 1.")
+            return
         df2 = pd.read_csv(file2)
         df2.columns = df2.columns.str.strip()
 
@@ -189,78 +196,52 @@ def main():
             df2.dropna(inplace=True)
             df2['EVENT_CLEAN'] = df2['EVENT_CLEAN'].astype(int)
             df2 = df2.sort_values('EVENT_CLEAN').reset_index(drop=True)
-            st.session_state.event_data = df2[['EVENT_CLEAN', 'USERS']]
 
-    # User Install Manual Input Tab
-    st.subheader("👥 User Install Configuration")
-    current_max_users = st.session_state.user_install or st.session_state.get('auto_max_users', 0)
-    
-    col1, col2 = st.columns(2)
-    with col1:
-        new_install = st.number_input("Enter Manual User Install Count", 
-                                    min_value=0, 
-                                    value=int(current_max_users))
-    with col2:
-        if st.button("Update User Install"):
-            st.session_state.user_install = new_install
-            st.success("User Install Count Updated!")
 
-    if 'level_data' in st.session_state and 'event_data' in st.session_state:
-        # Get current max users
-        current_max_users = st.session_state.user_install or st.session_state.auto_max_users
+            # Choose max_users based on condition between Level 1 and Level 2
+            level1_users = df1[df1['LEVEL_CLEAN'] == 1]['USERS'].values[0] if 1 in df1['LEVEL_CLEAN'].values else 0
+            level2_users = df1[df1['LEVEL_CLEAN'] == 2]['USERS'].values[0] if 2 in df1['LEVEL_CLEAN'].values else 0
+            max_users = level2_users if level2_users > level1_users else level1_users
 
-        # Recalculate metrics with current_max_users
-        df1 = st.session_state.level_data.copy()
-        df1['Retention %'] = round((df1['USERS'] / current_max_users) * 100, 2)
-        df1['Drop'] = ((df1['USERS'] - df1['USERS'].shift(-1)) / df1['USERS']).fillna(0) * 100
-        df1['Drop'] = df1['Drop'].round(2)
+            first_row = pd.DataFrame({'EVENT': ['Assumed_0'], 'USERS': [max_users], 'EVENT_CLEAN': [0]})
+            df2 = pd.concat([first_row, df2], ignore_index=True).sort_values('EVENT_CLEAN').reset_index(drop=True)
 
-        # Recalculate retention milestones
-        retention_20 = round(df1[df1['LEVEL_CLEAN'] == 20]['Retention %'].values[0], 2) if 20 in df1['LEVEL_CLEAN'].values else 0
-        retention_50 = round(df1[df1['LEVEL_CLEAN'] == 50]['Retention %'].values[0], 2) if 50 in df1['LEVEL_CLEAN'].values else 0
-        retention_75 = round(df1[df1['LEVEL_CLEAN'] == 75]['Retention %'].values[0], 2) if 75 in df1['LEVEL_CLEAN'].values else 0
-        retention_100 = round(df1[df1['LEVEL_CLEAN'] == 100]['Retention %'].values[0], 2) if 100 in df1['LEVEL_CLEAN'].values else 0
-        retention_150 = round(df1[df1['LEVEL_CLEAN'] == 150]['Retention %'].values[0], 2) if 150 in df1['LEVEL_CLEAN'].values else 0
-        retention_200 = round(df1[df1['LEVEL_CLEAN'] == 200]['Retention %'].values[0], 2) if 200 in df1['LEVEL_CLEAN'].values else 0
+            df2['% of Users at Ad'] = round((df2['USERS'] / max_users) * 100, 2)
 
-        # Recalculate ad metrics with current_max_users
-        df2 = st.session_state.event_data.copy()
-        first_row = pd.DataFrame({'EVENT': ['Assumed_0'], 'USERS': [current_max_users], 'EVENT_CLEAN': [0]})
-        df2_full = pd.concat([first_row, df2]).sort_values('EVENT_CLEAN').reset_index(drop=True)
-         
+            ad10 = df2[df2['EVENT_CLEAN'] == 10]['% of Users at Ad'].values[0] if 10 in df2['EVENT_CLEAN'].values else 0
+            ad20 = df2[df2['EVENT_CLEAN'] == 20]['% of Users at Ad'].values[0] if 20 in df2['EVENT_CLEAN'].values else 0
+            ad40 = df2[df2['EVENT_CLEAN'] == 40]['% of Users at Ad'].values[0] if 40 in df2['EVENT_CLEAN'].values else 0
+            ad70 = df2[df2['EVENT_CLEAN'] == 70]['% of Users at Ad'].values[0] if 70 in df2['EVENT_CLEAN'].values else 0
+            ad100 = df2[df2['EVENT_CLEAN'] == 100]['% of Users at Ad'].values[0] if 100 in df2['EVENT_CLEAN'].values else 0
 
-        # df2 = st.session_state.event_data.copy()
-        # first_row = pd.DataFrame({'EVENT': ['Assumed_0'], 'USERS': [current_max_users], 'EVENT_CLEAN': [0]})
-        # df2_full = pd.concat([first_row, df2]).sort_values('EVENT_CLEAN').reset_index(drop=True)
+            #Step 1: Difference of Ads
+            df2['Diff of Ads'] = df2['EVENT_CLEAN'].diff().fillna(df2['EVENT_CLEAN']).astype(int)
 
-        # Calculate percentage of users
-        df2_full['% of Users at Ad'] = round((df2_full['USERS'] / current_max_users) * 100, 2)  # नई लाइन
+            # Step 2: Multi1 = USERS × Diff of Ads
+            df2['Multi1'] = df2['USERS'] * df2['Diff of Ads']
+            sum1 = df2['Multi1'].sum()
 
-        # Get specific ad percentages
-        ad10 = df2_full[df2_full['EVENT_CLEAN'] == 10]['% of Users at Ad'].values[0] if 10 in df2_full['EVENT_CLEAN'].values else 0
-        ad20 = df2_full[df2_full['EVENT_CLEAN'] == 20]['% of Users at Ad'].values[0] if 20 in df2_full['EVENT_CLEAN'].values else 0
-        ad40 = df2_full[df2_full['EVENT_CLEAN'] == 40]['% of Users at Ad'].values[0] if 40 in df2_full['EVENT_CLEAN'].values else 0
-        ad70 = df2_full[df2_full['EVENT_CLEAN'] == 70]['% of Users at Ad'].values[0] if 70 in df2_full['EVENT_CLEAN'].values else 0
-        ad100 = df2_full[df2_full['EVENT_CLEAN'] == 100]['% of Users at Ad'].values[0] if 100 in df2_full['EVENT_CLEAN'].values else 0
+            # Step 3: Avg of Difference of Ads = (Diff of Ads) / 2
+            df2['Avg Diff Ads'] = df2['Diff of Ads'] / 2
 
-        # Now calculate average ads
-        df2_full['Diff of Ads'] = df2_full['EVENT_CLEAN'].diff().fillna(df2_full['EVENT_CLEAN'])
-        
-        # Recalculate all ad metrics
-        df2_full['Diff of Ads'] = df2_full['EVENT_CLEAN'].diff().fillna(df2_full['EVENT_CLEAN'])
-        df2_full['Multi1'] = df2_full['USERS'] * df2_full['Diff of Ads']
-        sum1 = df2_full['Multi1'].sum()
-        
-        df2_full['Avg Diff Ads'] = df2_full['Diff of Ads'] / 2
-        df2_full['Diff of Users'] = df2_full['USERS'].shift(1) - df2_full['USERS']
-        df2_full['Diff of Users'] = df2_full['Diff of Users'].fillna(0)
-        df2_full['Multi2'] = df2_full['Avg Diff Ads'] * df2_full['Diff of Users']
-        sum2 = df2_full['Multi2'].sum()
-        
-        # Calculate FINAL average using CURRENT user count
-        avg_ads_per_user = round((sum1 + sum2) / current_max_users, 2)
+            # Step 4: Difference of Users = Prev Row - Current Row
+            df2['Diff of Users'] = df2['USERS'].shift(1) - df2['USERS']
+            df2['Diff of Users'] = df2['Diff of Users'].fillna(0).astype(int)
 
-        
+            # Step 5: Multi2 = Avg Diff Ads × Diff of Users
+            df2['Multi2'] = df2['Avg Diff Ads'] * df2['Diff of Users']
+            sum2 = df2['Multi2'].sum()
+
+            # Step 6: Final Average Ads Per User
+            avg_ads_per_user = round((sum1 + sum2) / max_users, 2)
+
+
+            st.success(f"✅ Ad data processed successfully! Total Average Ads per User: {avg_ads_per_user}")
+        else:
+            st.error("❌ Required columns not found in file 2.")
+            return
+
+        # -------------------- PLOTS -------------------- #
 
         # -------------------- Retention Chart -------------------- #
 
@@ -349,12 +330,11 @@ def main():
 
         # -------------------- STEP 6: MANUAL METRICS SECTION -------------------- #
         st.subheader("📝 Step 6: Pasteable Manual Metrics")
-        # Update summary data with current_max_users
         default_summary_data = {
             "Version": version,
             "Date Selected": date_selected.strftime("%d-%b-%y"),
             "Check Date": check_date.strftime("%d-%b-%y"),
-            "User Install Count": int(current_max_users),
+            "Level 2 Users": int(max_users),
             "Total Level Retention (20)": f"{retention_20}%",
             "Total Level Retention (50)": f"{retention_50}%",
             "Total Level Retention (75)": f"{retention_75}%",
@@ -402,7 +382,6 @@ def main():
              file_name=f"DP1_METRIX_Report_{version}.xlsx",
              mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
         )
-
 
 if __name__ == "__main__":
     main()
