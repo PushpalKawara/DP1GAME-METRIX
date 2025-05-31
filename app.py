@@ -148,7 +148,7 @@ def main():
     if file1 and file2:
         df1 = pd.read_csv(file1)
         df1.columns = df1.columns.str.strip().str.upper()
-        level_columns = ['LEVEL','Level' ,  'LEVELPLAYED', 'TOTALLEVELPLAYED', 'TOTALLEVELSPLAYED']
+        level_columns = ['LEVEL','Level' ,  'LEVELPLAYED', 'TOTALLEVELPLAYED', 'TOTALLEVELSPLAYED',  'LEVEL_NUMBER']
         level_col = next((col for col in df1.columns if col in level_columns), None)
 
         if level_col and 'USERS' in df1.columns:
@@ -385,3 +385,6 @@ def main():
 
 if __name__ == "__main__":
     main()
+
+
+
