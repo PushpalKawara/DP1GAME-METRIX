@@ -144,6 +144,15 @@ def main():
     version = st.text_input("Enter Version (e.g. v1.2.3)", value="v1.0.0")
     date_selected = st.date_input("Date Selected", value=datetime.date.today())
     check_date = st.date_input("Check Date", value=datetime.date.today() + datetime.timedelta(days=1))
+    
+    # NEW: Add optional user install count input
+    user_install_count = st.number_input(
+        "🔢 Optional: Enter User Install Count (leave blank to auto-calculate from Level 1/2)",
+        min_value=0,
+        value=None,
+        step=1,
+        help="If provided, this value will be used as the install base for all calculations"
+    )
 
     if file1 and file2:
         df1 = pd.read_csv(file1)
@@ -165,11 +174,19 @@ def main():
             df1['LEVEL_CLEAN'] = df1['LEVEL_CLEAN'].astype(int)
             df1.sort_values('LEVEL_CLEAN', inplace=True)
 
-            # Choose max_users based on condition between Level 1 and Level 2
-            level1_users = df1[df1['LEVEL_CLEAN'] == 1]['USERS'].values[0] if 1 in df1['LEVEL_CLEAN'].values else 0
-            level2_users = df1[df1['LEVEL_CLEAN'] == 2]['USERS'].values[0] if 2 in df1['LEVEL_CLEAN'].values else 0
-            max_users = level2_users if level2_users > level1_users else level1_users
+            # Choose max_users based on user input or auto-calculate
+            if user_install_count is not None and user_install_count > 0:
+                max_users = user_install_count
+                install_source = "User Input"
+            else:
+                # Auto-calculate from level 1 and 2
+                level1_users = df1[df1['LEVEL_CLEAN'] == 1]['USERS'].values[0] if 1 in df1['LEVEL_CLEAN'].values else 0
+                level2_users = df1[df1['LEVEL_CLEAN'] == 2]['USERS'].values[0] if 2 in df1['LEVEL_CLEAN'].values else 0
+                max_users = level2_users if level2_users > level1_users else level1_users
+                install_source = f"Auto-calculated (max of Level 1: {level1_users}, Level 2: {level2_users})"
 
+            # Show the install base source
+            st.info(f"📊 Using install base of {max_users:,} (Source: {install_source})")
 
             df1['Retention %'] = round((df1['USERS'] / max_users) * 100, 2)
             df1['Drop'] = ((df1['USERS'] - df1['USERS'].shift(-1)) / df1['USERS']).fillna(0) * 100
@@ -181,10 +198,10 @@ def main():
             retention_100 = round(df1[df1['LEVEL_CLEAN'] == 100]['Retention %'].values[0], 2) if 100 in df1['LEVEL_CLEAN'].values else 0
             retention_150 = round(df1[df1['LEVEL_CLEAN'] == 150]['Retention %'].values[0], 2) if 150 in df1['LEVEL_CLEAN'].values else 0
             retention_200 = round(df1[df1['LEVEL_CLEAN'] == 200]['Retention %'].values[0], 2) if 200 in df1['LEVEL_CLEAN'].values else 0
-            # st.success("✅ File 1 cleaned and Retention/Drop calculated successfully!")
         else:
             st.error("❌ Required columns not found in file 1.")
             return
+            
         df2 = pd.read_csv(file2)
         df2.columns = df2.columns.str.strip()
 
@@ -196,12 +213,6 @@ def main():
             df2.dropna(inplace=True)
             df2['EVENT_CLEAN'] = df2['EVENT_CLEAN'].astype(int)
             df2 = df2.sort_values('EVENT_CLEAN').reset_index(drop=True)
-
-
-            # Choose max_users based on condition between Level 1 and Level 2
-            level1_users = df1[df1['LEVEL_CLEAN'] == 1]['USERS'].values[0] if 1 in df1['LEVEL_CLEAN'].values else 0
-            level2_users = df1[df1['LEVEL_CLEAN'] == 2]['USERS'].values[0] if 2 in df1['LEVEL_CLEAN'].values else 0
-            max_users = level2_users if level2_users > level1_users else level1_users
 
             first_row = pd.DataFrame({'EVENT': ['Assumed_0'], 'USERS': [max_users], 'EVENT_CLEAN': [0]})
             df2 = pd.concat([first_row, df2], ignore_index=True).sort_values('EVENT_CLEAN').reset_index(drop=True)
@@ -234,7 +245,6 @@ def main():
 
             # Step 6: Final Average Ads Per User
             avg_ads_per_user = round((sum1 + sum2) / max_users, 2)
-
 
             st.success(f"✅ Ad data processed successfully! Total Average Ads per User: {avg_ads_per_user}")
         else:
@@ -313,10 +323,8 @@ def main():
         ax2.tick_params(axis='x', labelsize=6)
         ax2.grid(True, linestyle='--', linewidth=0.5)
 
-
         ax2.tick_params(axis='x', labelsize=6)
         ax2.grid(True, linestyle='--', linewidth=0.5)
-
 
         # Annotate data points below x-axis
         for bar in bars:
@@ -334,7 +342,8 @@ def main():
             "Version": version,
             "Date Selected": date_selected.strftime("%d-%b-%y"),
             "Check Date": check_date.strftime("%d-%b-%y"),
-            "Level 2 Users": int(max_users),
+            "Install Base": int(max_users),
+            "Install Source": install_source,
             "Total Level Retention (20)": f"{retention_20}%",
             "Total Level Retention (50)": f"{retention_50}%",
             "Total Level Retention (75)": f"{retention_75}%",
@@ -385,6 +394,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
-
-
